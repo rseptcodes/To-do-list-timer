@@ -2,13 +2,6 @@
 
 Dual-mode productivity web app with smooth animations
 
-https://img.shields.io/badge/JavaScript-ES6+-yellow
-https://img.shields.io/badge/CSS3-Advanced-blue
-https://img.shields.io/badge/HTML5-Standard-orange
-https://img.shields.io/badge/PWA-Compatible-green
-https://img.shields.io/badge/Status-WIP_🚧-orange
-https://img.shields.io/badge/License-MIT-lightgrey
-
 🚨 WORK IN PROGRESS ALERT: This is an ongoing personal project with messy code, minimal documentation, and experimental features. Not production-ready!
 
 ---
