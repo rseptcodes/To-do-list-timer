@@ -6,7 +6,7 @@
 ![HTML5](https://img.shields.io/badge/html5-minimal-orange)
 ![Status](https://img.shields.io/badge/status-active_development-red)
 ![Mobile](https://img.shields.io/badge/mobile-tested-success)
-![License](https://img.shields.io/badge/license-MIT-green)
+
 Dual-mode productivity web app with smooth animations
 
 🚨 WORK IN PROGRESS ALERT: This is an ongoing personal project with messy code, minimal documentation, and experimental features. Not production-ready!
