@@ -3,9 +3,10 @@
 ![Vanilla JS](https://img.shields.io/badge/vanilla_js-100%25-ff69b4)
 ![JavaScript](https://img.shields.io/badge/javascript-learning-yellow)
 ![CSS3](https://img.shields.io/badge/css3-improving-blueviolet)
-![HTML5](https://img.shields.io/badge/html5-minimal-orange)
-![Status](https://img.shields.io/badge/status-active_development-red)
-![Mobile](https://img.shields.io/badge/mobile-tested-success)
+![Architecture](https://img.shields.io/badge/architecture-dynamic_ui-blue)
+![No Dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)
+![Mobile First](https://img.shields.io/badge/mobile_first-📱-success)
+![Status](https://img.shields.io/badge/status-🚧_wip-red)
 
 Dual-mode productivity web app with smooth animations
 
