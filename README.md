@@ -66,13 +66,7 @@ Vibration API Haptic feedback ✅ Working
 └── README.md               # This file
 ```
 
-Yes, it's all in one file right now. I'm planning to refactor into proper modules.
-
-# 🚀 Quick Start
-
-1. Clone or download the files
-2. Open index.html in a modern browser
-3. That's it! No build process, no dependencies
+Yep, it's all in one file right now. I'm planning to refactor into proper modules.
 
 # 🎮 How to Use
 
