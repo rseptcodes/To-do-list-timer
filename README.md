@@ -7,6 +7,7 @@
 ![No Dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)
 ![Mobile First](https://img.shields.io/badge/mobile_first-📱-success)
 ![Status](https://img.shields.io/badge/status-🚧_wip-red)
+[![Live Demo](https://img.shields.io/badge/🚀_Live_Demo-1ac783?style=for-the-badge)](https://seuusuario.github.io/notas-timer/)
 
 Dual-mode productivity web app with smooth animations
 
