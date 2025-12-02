@@ -1,12 +1,12 @@
 # 📝 Notas & Timer App  
 
 ![Vanilla JS](https://img.shields.io/badge/vanilla_js-100%25-ff69b4)
-![JavaScript](https://img.shields.io/badge/javascript-ES6%2B-yellow)
-![CSS3](https://img.shields.io/badge/css3-advanced-blue)
-![HTML5](https://img.shields.io/badge/html5-standard-orange)
+![JavaScript](https://img.shields.io/badge/javascript-learning-yellow)
+![CSS3](https://img.shields.io/badge/css3-improving-blueviolet)
+![HTML5](https://img.shields.io/badge/html5-minimal-orange)
 ![Status](https://img.shields.io/badge/status-active_development-red)
-![Mobile](https://img.shields.io/badge/mobile-first-success)
-
+![Mobile](https://img.shields.io/badge/mobile-tested-success)
+![License](https://img.shields.io/badge/license-MIT-green)
 Dual-mode productivity web app with smooth animations
 
 🚨 WORK IN PROGRESS ALERT: This is an ongoing personal project with messy code, minimal documentation, and experimental features. Not production-ready!
