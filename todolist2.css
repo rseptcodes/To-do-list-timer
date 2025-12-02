@@ -1,0 +1,392 @@
+body {
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
+	width: 100%;
+	height: 100%;
+	overflow-x: hidden;
+}
+.moldura{
+	width: 100%;
+	height: 100%
+}
+.header {
+	display: flex;
+	align-items: center;
+	gap: 5vh;
+}
+.titulo {
+	margin-left: 2%;
+}
+.botaoTrocar {
+	all: unset;
+	padding: 5px;
+	background-color:#ebeeef;
+	color: black;
+	border-radius: 100%;
+	z-index: 999; /* teste */
+	transition: all 0.5s ease-in-out;
+}
+.botaoDeCriacao {
+	all: unset;
+	position: fixed;
+	bottom: 1dvh;
+	left: 50%;
+	transform: translateX(-50%);
+	width: 40px;
+	height: 40px;
+	background-color: #1ac783;
+	color: white;
+	border-radius: 100%;
+	z-index: 999; /* teste */
+	transition: all 0.5s ease-in-out;
+}
+.botaoDeCriacao.focus{
+	bottom: 10dvh;
+	background-color: #64c7b2;
+}
+.botaoDeCriacao i {
+	left: 50%;
+	position: relative;
+	transform: translateX(-50%);
+}
+.mensagemVazio {
+	font-size: 25px;
+	color: black;
+	top: 50%;
+	left: 50%;
+	z-index: 1000;
+	position:fixed;
+}
+.botaoLixeira{
+	all: unset;
+	width: 35px;
+	height: 35px;
+	position: absolute;
+	right: -12vw;
+	top: 0;
+	right: 5px;
+	transform: translateX(0);
+	border-radius: 100%;
+	background-color: #d32323;
+	opacity: 1;
+	pointer-events: auto;
+	transition: all 0.5s ease-in-out;
+}
+.botaoLixeira.oculto {
+	top: 25%;
+	width: 4vw;
+	height: 2vh;
+	transform: translateX(75%);
+	border-radius: 40%;
+	opacity: 0;
+	display: block;
+	pointer-events: none;
+}
+.botaoLixeira i {
+	transition: all 0.5s ease-in-out;
+	position: relative;
+	left: 30%;
+	color: white;
+}
+.botaoLixeira.oculto i {
+	transform: scale(0.5) rotate(-30deg);
+}
+.notaDiv{
+	display: flex;
+	align-items: center;
+	position: relative;
+	transition: all 0.5s ease-in-out;
+}
+.notaDiv +.notaDiv{
+	margin-top: 1vh;
+}
+.notaFundo {
+	background: #ebeeef;
+	width: 93dvw;
+	min-height: 2dvh;
+	max-height: 10dvh;
+	overflow-wrap: break-word;
+	overflow-y: auto;
+	margin-left: 1vh;
+	padding-top: 10px;
+	padding-bottom: 10px;
+	position: relative;
+	transform: translate(0% 0%);
+	border-radius: 10px;
+	padding-left: 8px;
+	transition: all 0.5s ease-in-out;
+}
+.notaFundo.mini {
+	width: 80dvw;
+	border-radius: 15px;
+}
+.notaFadeIn {
+	opacity: 0;
+	transform: translateY(-20%);
+}
+.notaFadeOut{
+	transform: translateX(-100%);
+	opacity: 0;
+}
+.listaNotas {
+	overflow-y: auto;
+	margin: 0 auto;
+	width: 100dvw;
+	height: 80dvh;
+	overflow-x: hidden;
+	display: flex;
+	flex-direction: column;
+}
+.inputNotas {
+	z-index: 10;
+  position: fixed;
+  bottom: 0;
+  margin-bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80dvw;
+  padding: 12px 16px;
+  font-size: 16px;
+  border: none;
+  outline: none;
+  background: #ffff;
+  box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  scrollbar-width: thin;
+  scrollbar-color: #666 transparent;
+}
+
+.visorTimer {
+  background: #ebeeef;
+  border-radius: 14px;
+  padding: 20px;
+  width: 80%;
+  max-width: 280px;
+  margin: 20px auto;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.visorP {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #000;
+  margin: 0;
+  font-family: monospace;
+}
+
+.botaoDiv{
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 1vh;
+}
+.botaoTimer {
+  width: 70px;
+  aspect-ratio: 1.9;
+  background: #ebeeef;
+  color: #000;
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  font-size: 15px;
+  transition: 0.5s;
+  -webkit-tap-highlight-color:transparent;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.botaoTimer.minimizado {
+	padding: 0;
+	pointer-events: none;
+	width: 15px;
+	aspect-ratio: 1.0;
+	border-radius: 100%;
+}
+.botaoTimer:active {
+  transform: scale(0.92);
+  color: #ebeeef;
+}
+.inputNotas::-webkit-scrollbar {
+  width: 6px;
+}
+
+.inputNotas::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.inputNotas::-webkit-scrollbar-thumb {
+  background: #666;
+  border-radius: 10px;
+  transition: background 0.3s ease;
+}
+
+.inputNotas:hover::-webkit-scrollbar-thumb {
+  background: #888;
+}
+.timestampDiv::-webkit-scrollbar {
+  width: 2px;
+  height: 2px;
+}
+
+.timestampDiv::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.timestampDiv::-webkit-scrollbar-thumb {
+  background: #bec0c2;
+  border-radius: 10px;
+  transition: background 0.3s ease;
+}
+
+.timestampDiv:hover::-webkit-scrollbar-thumb {
+  background: #888;
+}
+.timestamp {
+	width: 80dvw;
+	height: 2dvh;
+	border-bottom: 1px solid #474d55;
+	font-size: 15px;
+	line-height: 2dvh;
+	padding: 1dvh 5px 1dvh 5px;
+	text-align: center;
+	transition: all 0.5s ease-in-out;
+}
+.timestampDiv {
+	overflow-y: auto;
+	margin: 0 auto;
+	margin-top: 2vh;
+	width: 95dvw;
+	height: 65dvh;
+	overflow-x: hidden;
+	gap: 5px;
+	display: flex;
+	align-items: center;
+	flex-direction: column;
+	scrollbar-width: thin;
+  scrollbar-color: #666 transparent;
+}
+@keyframes notaBalançar {
+  0% { transform: scale(1) rotate(0deg);
+  }
+  50% { transform: scale(0.9) rotate(-1deg); 
+  	background-color:#c8dce8;
+  }
+  75% { transform: scale(0.9) rotate(1deg);
+  background-color:#c8dce8;
+  }
+  100% { transform: scale(0.9) rotate(0deg); }
+}
+
+.notaFundo.balançando {
+  animation: notaBalançar 2s ease-in-out;
+  animation-direction: alternate;
+  animation-iteration-count: infinite;
+}
+
+@keyframes piscar-sutil {
+  0%, 100% {
+    background-color: #ebeeef;
+    box-shadow: none;
+    transform: translateY(0);
+  }
+  50% {
+    background-color: rgba(255, 77, 79, 0.99);
+    box-shadow: 0 6px 16px rgba(255,77,79,0.16);
+    transform: translateY(-1px);
+  }
+}
+.botaoTimer.minimizado.iniciar.piscando {
+  animation: piscar-sutil 1.3s ease-in-out infinite;
+  will-change: background-color, box-shadow, transform;
+}
+@media (prefers-reduced-motion: reduce) {
+  .botaoTimer.minimizado.iniciar.piscando {
+    animation: none;
+    background-color: #ebeeef;
+  }
+}
+@keyframes slideFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateX(-60px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.timestamp {
+  animation: slideFadeIn 0.4s ease-out forwards;
+}
+.aparecer {
+  animation: slideFadeIn 0.7s ease-out forwards;
+}
+@keyframes slideFadeOut {
+  0% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(60px);
+  }
+}
+.timestamp.desaparecer {
+  animation: slideFadeOut 0.25s ease forwards;
+}
+.desaparecer {
+  animation: slideFadeOut 0.7s ease forwards;
+}
+@keyframes fadeIn{
+  0% { 
+    opacity: 0;
+  }
+  100% { 
+    opacity: 1;
+  }
+}
+@keyframes fadeOut{
+  0% { 
+    opacity: 1;
+  }
+  100% { 
+    opacity: 0;
+  }
+}
+
+.timestampInfo {
+  animation: fadeIn 1s ease forwards;
+  animation-iteration-count: 1;
+  font-size: 15px;
+  position: fixed;
+  bottom: 2dvh;
+}
+
+.timestampInfoFadeOut {
+  animation: fadeOut 1s ease forwards;
+  font-size: 15px;
+  position: fixed;
+  bottom: 2dvh;
+}
+
+/* experimental */
+
+.oculto {
+	display: none; 
+	pointer-events: none;
+	opacity: 0;
+}
+.botaoDeCriacao.oculto{
+	animation: fadeOut 1s ease forwards;
+}
+.botaoDeCriacao{
+	animation: fadeIn 1s ease forwards;
+}
+.timestampDiv.oculto{
+	animation: fadeOut 1s ease forwards;
+}
+.timestampDiv{
+	animation: fadeIn 1s ease forwards;
+}
