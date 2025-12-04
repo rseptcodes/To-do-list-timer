@@ -335,7 +335,17 @@ function ativarOInput(index){
   focusInput(inputNotas);
 }
 function focusInput(input){
-	input.focus();
+  input.focus();
+  
+  const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+  if (!isMobile) return;
+  
+  setTimeout(() => {
+    input.scrollIntoView({ 
+      behavior: 'smooth', 
+      block: 'center' 
+    });
+  }, 300);
 }
 
 function botaoDeCriacaoEmFocus(el){
@@ -380,7 +390,7 @@ async function renderizarNotas(item, index){
   const notaFundo = document.createElement("div");
   notaFundo.classList.add("notaFundo");
   notaFundo.innerText = texto;
-  notaFundo.dataset.id = id; // CRUCIAL
+  notaFundo.dataset.id = id; 
 
   const botaoLixeira = criarbotaoLixeira(notaDiv, id);
   verificarToque(notaFundo, id);
@@ -407,7 +417,7 @@ function verificarToque(el,id) {
     holdTimer = setTimeout(() => {
       el.classList.add("balançando");
       navigator.vibrate(30);
-    }, 1200); // começa a balançar depois de 2s segurando
+    }, 1200); 
   });
 
   el.addEventListener("touchend", () => {
@@ -447,6 +457,7 @@ async function efeitoFadeInNota(el){
 async function efeitoFadeOutNota(el){
 	el.classList.add("notaFadeOut");
 }
+
 async function apagarNotas(id){
   const index = modoNotas.notasArray.findIndex(n => n.id === id);
   if (index !== -1) modoNotas.notasArray.splice(index, 1);
@@ -484,9 +495,10 @@ function renderizarNotasSalvas(){
   });
 }
 
+// funcoes relacionadas à animacao em geral
 function delay(ms){
 	return new Promise(resolve =>
-	setTimeout(resolve, ms)); //delisia
+	setTimeout(resolve, ms));
 }
 async function animarEntrada(el){
 	el.classList.add("aparecer");
