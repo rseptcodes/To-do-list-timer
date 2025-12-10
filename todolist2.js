@@ -5,7 +5,7 @@ const modosSwitch = {
   titulo: null,
   header: null,
   modoAtual: null,
-  temaAtual: null,
+  temaAtual: "white",
   // cria o header
   criarHeader() {
   	this.header = document.createElement("div");
@@ -40,9 +40,9 @@ modosSwitch.botaoTema.addEventListener("click", () => {
   },
 atualizarBotaoTema(temaAtual){
 	if (temaAtual === "dark"){
-		this.botaoTema.innerHTML = `<i class="fa-solid fa-moon"></i>`;
-	} else {
 		this.botaoTema.innerHTML = `<i class="fa-solid fa-sun"></i>`;
+	} else {
+		this.botaoTema.innerHTML = `<i class="fa-solid fa-moon"></i>`;
 	}
 },
   trocarTema(){
