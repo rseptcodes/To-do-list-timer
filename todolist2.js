@@ -1,9 +1,11 @@
 // Objeto relacionado à troca de modos
 const modosSwitch = {
   botaoTrocar: null,
+  botaoTema: null,
   titulo: null,
   header: null,
   modoAtual: null,
+  temaAtual: null,
   // cria o header
   criarHeader() {
   	this.header = document.createElement("div");
@@ -17,6 +19,10 @@ const modosSwitch = {
     this.botaoTrocar.classList.add("botaoTrocar");
     this.botaoTrocar.innerHTML = `<i class="fa-solid fa-clock"></i>`;
     this.header.appendChild(this.botaoTrocar);
+    this.botaoTema = document.createElement("button");
+    this.botaoTema.className = "botaoTrocar";
+    this.header.appendChild(this.botaoTema);
+    this.botaoTema.innerHTML = `<i class="fa-solid fa-moon"></i>`;
     
   // botao para trocar os modos
 modosSwitch.botaoTrocar.addEventListener("click", async () => {
@@ -27,10 +33,40 @@ modosSwitch.botaoTrocar.addEventListener("click", async () => {
     else
       modosSwitch.mudarTitulo("Notas");
 });
-
+  // funcao para indentificar o tema atual e salvar em localStorage
+modosSwitch.botaoTema.addEventListener("click", () => {
+	modosSwitch.trocarTema();
+});
   },
+atualizarBotaoTema(temaAtual){
+	if (temaAtual === "dark"){
+		this.botaoTema.innerHTML = `<i class="fa-solid fa-moon"></i>`;
+	} else {
+		this.botaoTema.innerHTML = `<i class="fa-solid fa-sun"></i>`;
+	}
+},
+  trocarTema(){
+  if (this.temaAtual === "dark"){
+  	document.body.removeAttribute("data-theme");
+  	this.temaAtual = "white";
+  } else {
+  	document.body.setAttribute("data-theme", "dark");
+  	this.temaAtual = "dark";
+  }
+  localStorage.setItem("tema", this.temaAtual);
+  modosSwitch.atualizarBotaoTema(this.temaAtual);
+  },
+carregarTema(){
+	this.temaAtual = localStorage.getItem("tema");
+	if (this.temaAtual === "dark"){
+		document.body.setAttribute("data-theme", "dark");
+	} else {
+		document.body.removeAttribute("data-theme");
+	}
+	modosSwitch.atualizarBotaoTema(this.temaAtual);
+	},
   // função que muda o titulo
-  mudarTitulo(texto) {
+  mudarTitulo(texto){
     if (this.titulo) this.titulo.innerText = texto;
   },
   // inicia o modo
@@ -45,6 +81,7 @@ modosSwitch.botaoTrocar.addEventListener("click", async () => {
   		modoNotas.gerenciarOpacidadeNotasUI();
   		modosSwitch.mudarTitulo("Timer");
   	}
+  	modosSwitch.carregarTema();
   }
 };
 // objeto do modo de notas
@@ -196,6 +233,7 @@ const modoTimer = {
     let numeroF = String(numero).padStart(2, "0");
     this.visorP.innerText = minutosF + ":" + numeroF;
   },
+  // indica a funcao de criarTimestamp
   async timestampInfo(){
   	const timestampInfo = document.createElement("p");
   	timestampInfo.className = "timestampInfo";
@@ -295,7 +333,7 @@ for (let i = timestamps.length - 1; i >= 0; i--) {
 }
 }
 
-// funcao relacionado ao touch
+// funcao relacionado ao deslizamento horizontal para criarTimestamp
 async function verificarDeslizamentoHorizontal(elemento){
 	await delay(0);
   const distancia = 80;
@@ -336,7 +374,7 @@ function ativarOInput(index){
 }
 function focusInput(input){
   input.focus();
-  
+  // se for mobile deixa o input visivel
   const isMobile = /Mobi|Android/i.test(navigator.userAgent);
   if (!isMobile) return;
   
@@ -347,13 +385,14 @@ function focusInput(input){
     });
   }, 300);
 }
-
+// efeito visual para tornar mais dinamico
 function botaoDeCriacaoEmFocus(el){
 	el.classList.toggle("focus");
 	if(el.classList.contains ("focus")) el.innerHTML = '<i class="fa-solid fa-check"></i>'; else {
 		this.botaoDeCriacao.innerHTML = '<i class="fa-solid fa-pen"></i>';
 	}
 }
+// fecha o input e guarda o texto
 function fecharOInput(texto){
   if (document.querySelector(".inputNotas")){
     document.querySelectorAll(".inputNotas").forEach(el => el.remove());
@@ -364,6 +403,7 @@ function fecharOInput(texto){
   renderizarNotas(nota, index);
   modoNotas.ultimoIndexSalvo = null;
 }
+//salva o texto em array e envia ao localstorage para renderizar
 function salvarTextoEmArray(texto, index){
   const nota = { id: gerarId(), text: texto };
   if (typeof index === "number" && index >= 0) {
@@ -374,10 +414,14 @@ function salvarTextoEmArray(texto, index){
   localStorage.setItem("notasArray", JSON.stringify(modoNotas.notasArray));
   return nota;
 }
+
+//gera id
 function gerarId(){
   if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
   return Date.now().toString(36) + Math.random().toString(36).slice(2,8);
 }
+
+// renderiza notas no dom
 async function renderizarNotas(item, index){
   const isObj = typeof item === "object" && item !== null;
   const texto = isObj ? item.text : item;
@@ -390,7 +434,7 @@ async function renderizarNotas(item, index){
   const notaFundo = document.createElement("div");
   notaFundo.classList.add("notaFundo");
   notaFundo.innerText = texto;
-  notaFundo.dataset.id = id; 
+  notaFundo.dataset.id = id;
 
   const botaoLixeira = criarbotaoLixeira(notaDiv, id);
   verificarToque(notaFundo, id);
@@ -408,6 +452,7 @@ async function renderizarNotas(item, index){
   if (modoNotas.listaNotas) modoNotas.atualizarMensagemVazio();
   efeitoFadeInNota(notaDiv);
 }
+// funcao para verificar o toque para editar notas.
 function verificarToque(el,id) {
   let startTouchTime = 0;
   let holdTimer;
@@ -417,7 +462,7 @@ function verificarToque(el,id) {
     holdTimer = setTimeout(() => {
       el.classList.add("balançando");
       navigator.vibrate(30);
-    }, 1200); 
+    }, 1200);
   });
 
   el.addEventListener("touchend", () => {
@@ -458,6 +503,7 @@ async function efeitoFadeOutNota(el){
 	el.classList.add("notaFadeOut");
 }
 
+// funcoes de gerenciamento da extincao de notas
 async function apagarNotas(id){
   const index = modoNotas.notasArray.findIndex(n => n.id === id);
   if (index !== -1) modoNotas.notasArray.splice(index, 1);
@@ -488,6 +534,8 @@ botaoLixeira.innerHTML = '<i class="fa-solid fa-trash"></i>';
 async function trocarClassebotaoLixeira(item){
 	item.classList.toggle("oculto");
 }
+
+// renderiza as notas salvas no localStorage
 function renderizarNotasSalvas(){
   modoNotas.notasArray = JSON.parse(localStorage.getItem("notasArray") || "[]");
   modoNotas.notasArray.forEach((item, index) => {
