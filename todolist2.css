@@ -456,51 +456,75 @@ body {
 }
 
 .nowBar {
-  position: absolute;
+  position: relative;
   width: 40dvw;
   height: 6dvh;
   background-color: var(--sc-color);
   color: var(--txt-color);
-  left: 50%;
   line-height: 6dvh;
   z-index: 100000;
   font-size: 22px;
   text-indent: 15px;
   border-radius: 50px;
-  position: fixed;
   text-align: center;
-  transform: translateX(-50%) scale(0);
   box-shadow: var(--shadow-medium);
-  animation: apareceCentro 3.5s ease-in-out forwards, someCentro 1.5s ease-in-out forwards 3.5s;
-}
-.nowBar::after {
-	content: "";
-	position: absolute;
-	background-color: var(--red-buttoncolor);
-	animation: so-piscar 1.3s ease-in-out infinite;
-	width: 22px;
-	top: calc(50% - 11px);
-	left: 13%;
-	height: 22px;
-	border-radius: 100%;
+  top: -10%;
+  left: 50%;
+  transform: translateX(-50%) scale(0);
+  opacity: 0;
+  pointer-events: none;
+  transition: background-color 0.5s ease-in-out, color 0.5s ease-in-out, box-shadow 1s ease-in-out;
 }
 
-.nowBar.standBy {
-	left: 0%;
-	top: 0%;
-	transform: translateX(0);
-	line-height: 4dvh;
-	font-size: 14px;
-	position: relative;
-	width: 22dvw;
+.nowBar.nowBar--centro {
+  animation:
+  apareceCentro 3.5s ease forwards,
+  someCentro 1.5s ease-out forwards 3.5s;
+  opacity: 1;
+  position: fixed;
+  pointer-events: auto;
+}
+
+.nowBar.nowBar--minimizado {
+  left: 0%;
+  top: 0%;
+  transform: translateX(0);
+  line-height: 4dvh;
+  font-size: 14px;
+  width: 22dvw;
   height: 4dvh;
+  opacity: 1;
+  pointer-events: auto;
   animation: slideFadeIn 0.7s ease-out forwards;
 }
-.nowBar.standBy::after{
-	width: 14px;
-	height: 14px;
-	top: calc(50% - 7px);
-	left: 12%;
+
+.nowBar.nowBar--oculto {
+  opacity: 0;
+  pointer-events: none;
+  /* Anima a saída */
+  transition: opacity 0.7s ease, transform 0.3s ease;
+}
+
+.nowBar:not(.nowBar--oculto)::after {
+  content: "";
+  position: absolute;
+  background-color: var(--red-buttoncolor);
+  animation: so-piscar 1.3s ease-in-out infinite;
+  border-radius: 100%;
+}
+
+.nowBar.nowBar--centro::after {
+  width: 22px;
+  height: 22px;
+  top: calc(50% - 11px);
+  left: 13%;
+}
+
+.nowBar.nowBar--minimizado::after {
+  width: 14px;
+  height: 14px;
+  top: calc(50% - 7px);
+  left: 12%;
 }
 
 @keyframes apareceCentro {
@@ -515,7 +539,7 @@ body {
   100% {
     top: 2%;
     transform: translateX(-50%) scale(1);
-}
+  }
 }
 
 @keyframes someCentro {
