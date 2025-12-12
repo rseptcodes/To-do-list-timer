@@ -28,10 +28,14 @@ const modosSwitch = {
 modosSwitch.botaoTrocar.addEventListener("click", async () => {
 	await modoNotas.gerenciarOpacidadeNotasUI();
 	await modoTimer.gerenciarOpacidadeTimerUI();
-	if(modoNotas.listaNotas.classList.contains("oculto"))
+	if(modoNotas.listaNotas.classList.contains("oculto")) {
       modosSwitch.mudarTitulo("Timer");
-    else
+      modosSwitch.modoAtual = "modoTimer";
+    } else {
       modosSwitch.mudarTitulo("Notas");
+      modosSwitch.modoAtual = "modoNotas";
+      if (modoTimer.rodando && modosSwitch.modoAtual !== "modoTimer") modoTimer.atualizarNowBar();
+    }
 });
   // funcao para indentificar o tema atual e salvar em localStorage
 modosSwitch.botaoTema.addEventListener("click", () => {
@@ -79,7 +83,7 @@ carregarTema(){
   		modosSwitch.mudarTitulo("Notas");
   	} else if (this.modoAtual === "modoTimer") {
   		modoNotas.gerenciarOpacidadeNotasUI();
-  		modosSwitch.mudarTitulo("Timer");
+  		modosSwitch.mudarTitulo();
   	}
   	modosSwitch.carregarTema();
   }
@@ -150,6 +154,7 @@ const modoTimer = {
   visorP: null,
   botaoDiv: null,
   timestampDiv: null,
+  nowBar: null,
 
   criarUITimer() {
     const criarVisorTimer = () => {
@@ -214,6 +219,7 @@ const modoTimer = {
    this.segundos_pausados = 0;
    this.atualizarNumeroTimer(0);
    this.rodando = false;
+   this.deleteNowBar();
 	},
 	pause() {
 		this.segundos_pausados = this.formatado;
@@ -232,7 +238,49 @@ const modoTimer = {
     numero = numero % 60;
     let numeroF = String(numero).padStart(2, "0");
     this.visorP.innerText = minutosF + ":" + numeroF;
+    if (this.nowBar){
+    	this.atualizarNowBar();
+    }
   },
+  async criarNowBar() {
+  if (!this.rodando) return;
+	this.nowBar = document.createElement("div");
+	this.nowBar.className = "nowBar";
+	modosSwitch.header.appendChild(this.nowBar)
+await delay(2000);
+if(!this.nowBar) return
+if (modosSwitch.modoAtual !== "modoNotas" || !this.rodando) {
+    this.nowBar.remove();
+    this.nowBar = null;
+    return;
+  }
+this.nowBar.style.animation = "none";
+void this.nowBar.offsetWidth;
+this.nowBar.style.animation = "";
+this.nowBar.classList.add("standBy");
+  },
+async atualizarNowBar(){
+  if (modosSwitch.modoAtual !== "modoNotas" || !this.rodando) {
+    await this.deleteNowBar();
+    return;
+  }
+  if (!this.nowBar) await this.criarNowBar();
+  if (this.nowBar) this.nowBar.innerText = this.visorP.innerText;
+},
+async deleteNowBar() {
+  if (!this.nowBar) return;
+  if (modosSwitch.modoAtual === "modoTimer" || !this.rodando) {
+  // esta é uma solucao temporaria, nao tenho mais sanidade pra lidar com isso
+  this.nowBar.style.animation = "none";
+  await delay(100);
+  this.nowBar.style.transition = "opacity 1s";
+this.nowBar.style.opacity = "0";
+   await delay(2000);
+    this.nowBar.remove();
+    this.nowBar = null;
+    console.log("nowBar removida");
+  }
+},
   // indica a funcao de criarTimestamp
   async timestampInfo(){
   	const timestampInfo = document.createElement("p");
