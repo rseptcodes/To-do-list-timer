@@ -247,7 +247,7 @@ const modoTimer = {
 	this.nowBar = document.createElement("div");
 	this.nowBar.className = "nowBar";
 	modosSwitch.header.appendChild(this.nowBar)
-await delay(2000);
+await delay(5000);
 if(!this.nowBar) return
 if (modosSwitch.modoAtual !== "modoNotas" || !this.rodando) {
     this.nowBar.remove();
