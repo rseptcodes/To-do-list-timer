@@ -31,10 +31,13 @@ modosSwitch.botaoTrocar.addEventListener("click", async () => {
 	if(modoNotas.listaNotas.classList.contains("oculto")) {
       modosSwitch.mudarTitulo("Timer");
       modosSwitch.modoAtual = "modoTimer";
+      if (nowBar.element){
+      	nowBar.esconder();
+      }
     } else {
       modosSwitch.mudarTitulo("Notas");
       modosSwitch.modoAtual = "modoNotas";
-      if (modoTimer.rodando && modosSwitch.modoAtual !== "modoTimer") modoTimer.atualizarNowBar();
+      if (modoTimer.rodando && modosSwitch !== modoTimer) nowBar.mostrarNoCentro();
     }
 });
   // funcao para indentificar o tema atual e salvar em localStorage
@@ -154,7 +157,6 @@ const modoTimer = {
   visorP: null,
   botaoDiv: null,
   timestampDiv: null,
-  nowBar: null,
 
   criarUITimer() {
     const criarVisorTimer = () => {
@@ -208,7 +210,10 @@ const modoTimer = {
 	this.atualizarNumeroTimer(this.formatado);
 	},1000);
 	this.rodando = true;
-	if (this.segundos_pausados === 0) this.timestampInfo();
+	if (this.segundos_pausados === 0){
+		this.timestampInfo();
+		nowBar.criar();
+	} 
 },
   reset() {
    clearInterval(this.timerInterval);
@@ -219,7 +224,7 @@ const modoTimer = {
    this.segundos_pausados = 0;
    this.atualizarNumeroTimer(0);
    this.rodando = false;
-   this.deleteNowBar();
+   nowBar.deletar();
 	},
 	pause() {
 		this.segundos_pausados = this.formatado;
@@ -238,49 +243,8 @@ const modoTimer = {
     numero = numero % 60;
     let numeroF = String(numero).padStart(2, "0");
     this.visorP.innerText = minutosF + ":" + numeroF;
-    if (this.nowBar){
-    	this.atualizarNowBar();
-    }
+    nowBar.atualizarNowBar();
   },
-  async criarNowBar() {
-  if (!this.rodando) return;
-	this.nowBar = document.createElement("div");
-	this.nowBar.className = "nowBar";
-	modosSwitch.header.appendChild(this.nowBar)
-await delay(5000);
-if(!this.nowBar) return
-if (modosSwitch.modoAtual !== "modoNotas" || !this.rodando) {
-    this.nowBar.remove();
-    this.nowBar = null;
-    return;
-  }
-this.nowBar.style.animation = "none";
-void this.nowBar.offsetWidth;
-this.nowBar.style.animation = "";
-this.nowBar.classList.add("standBy");
-  },
-async atualizarNowBar(){
-  if (modosSwitch.modoAtual !== "modoNotas" || !this.rodando) {
-    await this.deleteNowBar();
-    return;
-  }
-  if (!this.nowBar) await this.criarNowBar();
-  if (this.nowBar) this.nowBar.innerText = this.visorP.innerText;
-},
-async deleteNowBar() {
-  if (!this.nowBar) return;
-  if (modosSwitch.modoAtual === "modoTimer" || !this.rodando) {
-  // esta é uma solucao temporaria, nao tenho mais sanidade pra lidar com isso
-  this.nowBar.style.animation = "none";
-  await delay(100);
-  this.nowBar.style.transition = "opacity 1s";
-this.nowBar.style.opacity = "0";
-   await delay(2000);
-    this.nowBar.remove();
-    this.nowBar = null;
-    console.log("nowBar removida");
-  }
-},
   // indica a funcao de criarTimestamp
   async timestampInfo(){
   	const timestampInfo = document.createElement("p");
@@ -293,6 +257,81 @@ this.nowBar.style.opacity = "0";
   	await delay(1000);
   	timestampInfo.remove();
   },
+};
+//funcoes relacionadas á nowBar
+nowBar = {
+  	element: null,
+  	isVisible: false,
+  	estado: "oculto",
+  	// estados possiveis: centro, minimizado e oculto.
+  	timeoutId: null,
+  	primeiraVez: true,
+  	criar(){
+  		if (this.element) return;
+  		this.element = document.createElement("div");
+     	this.element.className = "nowBar";
+	modosSwitch.header.appendChild(this.element);
+  	},
+  	mostrarNoCentro(){
+  		if(!this.primeiraVez){
+  			this.mostrarMinimizado();
+  			return;
+  		}
+  		if (!this.element) this.criar();
+  		if (this.timeoutId) {
+  			clearTimeout(this.timeoutId);
+  		}
+  		this.element.classList.remove("nowBar--oculto");
+  		this.element.classList.remove("nowBar--minimizado");
+  		this.element.classList.add("nowBar--centro");
+  		this.isVisible = true;
+  		this.estado = "centro";
+  		this.timeoutId = setTimeout(() => {
+  			if (this.estado === "centro"){
+  			this.mostrarMinimizado();
+  			this.primeiraVez = false;
+  			}
+  		},5000);
+  	},
+  	mostrarMinimizado(){
+  		if (!this.element) this.criar();
+  		this.element.classList.remove("nowBar--oculto");
+  		this.element.classList.add("nowBar--minimizado");
+  		this.element.classList.remove("nowBar--centro");
+  		this.estado = "minimizado";
+  		this.isVisible = true;
+  	},
+  	esconder(){
+  		if (!this.isVisible || !this.element) return;
+  		this.element.classList.add("nowBar--oculto");
+  		this.element.classList.remove("nowBar--minimizado");
+  		this.element.classList.remove("nowBar--centro");
+  		this.estado = "oculto";
+  		this.isVisible = false;
+  		},
+  	atualizarNowBar(){
+  		if (!this.isVisible || !this.element) return;
+  		const texto = modoTimer.visorP.innerText;
+  		this.element.innerText = texto;
+  	},
+  	deletar(){
+  	if (!this.element) return;
+  	this.esconder();
+  	this.primeiraVez = true;
+  	if (this.timeoutId) {
+  		clearTimeout(this.timeoutId);
+  		this.timeoutId = null;
+  	}
+  	setTimeout(() => {
+    if (this.element && this.element.parentNode) {
+	this.element.remove();
+	this.element = null;
+	this.isVisible = false;
+	this.estado = "oculto";
+	console.log("NowBar removida");
+  	}
+  	}, 300);
+},
 };
 // funcao que cria os botoesTimer
 async function criarBotaoTimer(acao){
