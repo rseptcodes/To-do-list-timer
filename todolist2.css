@@ -91,12 +91,13 @@ body {
 .mensagemVazio {
 	font-size: 20px;
 	color: var(--txt-color);
-	top: 50%;
-	left: 50%;
+	text-align: center;
 	white-space: nowrap;
-	transform: translateX(-50%);
 	z-index: 1000;
-	position:fixed;
+	animation: fadeIn 1s ease forwards;
+}
+.mensagemVazio.oculto{
+	animation: fadeOut 1s ease forwards;
 }
 .botaoLixeira{
 	all: unset;
@@ -208,12 +209,90 @@ body {
   padding: 20px;
   width: 80%;
   max-width: 280px;
+  position: relative;
   margin: 20px auto;
   text-align: center;
   box-shadow: var(--shadow-medium);
   transition: all 0.5s ease-in-out;
 }
 
+.visorTimer::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: -2%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 100%;
+  background-color: var(--bg-color);
+  border-top-right-radius: 18px;
+  border-bottom-right-radius: 18px;
+  transition: all 0.5s ease-in-out;
+}
+.visorTimer.visorTimer--reveal::after {
+  width: 48px; 
+}
+.switch{
+	all:unset;
+	display:flex;
+	flex-direction: column;
+	justify-content: space-between;
+	align-items: center;
+	position: absolute;
+	left: 0;
+	opacity: 0;
+	top: 50%;
+	transform: translateY(-50%);
+	z-index: 1000;
+	background-color: var(--sc-color);
+	width: 27px;
+	height: 52px;
+	padding: 10px 5px;
+	border-radius: 18px;
+	pointer-events: none;
+}
+.switch::after{
+	content: "";
+	position:absolute;
+	top:50%;
+	left:50%;
+	z-index: 1002;
+	transform: translate(-50%, -50%);
+	width: 80%;
+	height: 1px;
+	background-color: var(--ts-color);
+}
+.switch i {
+	color: var(--ts-color);
+	z-index: 1001;
+	transition: all 0.9s ease-in-out;
+}
+.switch::before{
+	content: "";
+	width: 30px;
+	z-index: 1001;
+	height: 30px;
+	border-radius: 15px;
+	position: absolute;
+	background-color: var(--red-buttoncolor);
+	top:25%;
+	left:50%;
+	transform: translate(-50%, -50%);
+	transition: all 0.5s ease-in-out;
+}
+.switch--ativo::before{
+	top:75%;
+}
+.switch:not(.switch--ativo) i:first-child { color: var(--bg-color); }
+.switch.switch--ativo i:last-child { color: var(--bg-color); }
+.switch:active {
+	box-shadow: var(--shadow-small);
+	background-color: var(--bg-color);
+}
+.switch--reveal{
+	animation: slideFadeInSwitch 0.6s ease-in-out forwards;
+	pointer-events: auto;
+}
 .visorP {
   font-size: 2rem;
   font-weight: bold;
@@ -382,7 +461,26 @@ body {
     transform: translateX(0);
   }
 }
-
+@keyframes slideFadeInSwitch {
+  0% {
+    opacity: 0;
+    transform: translate(-30px, -50%);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0 , -50%);
+  }
+}
+@keyframes slideFadeOutSwitch {
+  0% {
+    opacity: 1;
+    transform: translate(0, -50%);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-30px , -50%);
+  }
+}
 .timestamp {
   animation: slideFadeIn 0.4s ease-out forwards;
 }
@@ -552,3 +650,4 @@ body {
     transform: translateX(-50%) scale(0);
   }
 }
+
