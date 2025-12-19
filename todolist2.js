@@ -31,6 +31,7 @@ modosSwitch.botaoTrocar.addEventListener("click", async () => {
 	if(modoNotas.listaNotas.classList.contains("oculto")) {
       modosSwitch.mudarTitulo("Timer");
       modosSwitch.modoAtual = "modoTimer";
+      visorUI.tipUI();
       if (nowBar.element){
       	nowBar.esconder();
       }
@@ -80,7 +81,7 @@ carregarTema(){
   iniciarModo(modoAtual){
   	this.modoAtual = modoAtual;
   	if (modoNotas.listaNotas === null) modoNotas.criarUINotas();
-  	if (modoTimer.visorP === null) modoTimer.criarUITimer();
+  	if (visorUI.visorP === null) modoTimer.criarUITimer();
   	if(this.modoAtual === "modoNotas"){
   		modoTimer.gerenciarOpacidadeTimerUI();
   		modosSwitch.mudarTitulo("Notas");
@@ -122,6 +123,9 @@ const modoNotas = {
     await gerenciarAnimacao(el);
   	el?.classList.toggle("oculto");
   }
+  if (this.mensagemVazio) {
+  	this.mensagemVazio.classList.toggle("oculto");
+  }
 },
 	mensagemVazio: null,
 	criarMensagemVazio(){
@@ -150,38 +154,92 @@ window.addEventListener("DOMContentLoaded", () => {
 	modosSwitch.criarHeader();
   modosSwitch.iniciarModo("modoNotas");
 });
-// objeto do modo timer
-const modoTimer = {
-  numeroTimer: null,
-  VisorUI: null,
+// objeto do visor
+const visorUI = {
+	VisorUI: null,
   visorP: null,
-  botaoDiv: null,
-  timestampDiv: null,
-
-  criarUITimer() {
-    const criarVisorTimer = () => {
+  switchT: null,
+  primeiraVez: true,
+  iconesDoSwitch: '<i class="fa-solid fa-stopwatch" aria-hidden="true"></i> <i class="fa-solid fa-hourglass-half" aria-hidden="true"></i>',
+  visorUIState: "hidden",
+  // pode ser hidden ou reveal.
+  criar(){
       if (this.VisorUI !== null) return;
       this.VisorUI = document.createElement("div");
-      this.VisorUI.className = "visorTimer";
+      this.VisorUI.classList.add("visorTimer");
       moldura.appendChild(this.VisorUI);
       this.visorP = document.createElement("p");
       this.visorP.className = "visorP";
       this.VisorUI.appendChild(this.visorP);
+      modoTimer.atualizarNumeroTimer(0);
+       this.gerenciarSwitchModoTimer();
+     this.VisorUI.addEventListener("click", (e) => {
+  if (e.target !== this.switchT && !this.switchT?.contains(e.target)) {
+    this.gerenciarEstadoVisorUI();
+  }
+});
+},
+gerenciarSwitchModoTimer(){
+	//  switch ira servir para trocar a funcao do timer, podendo ser cronometro ou alarme.
+	this.switchT = document.createElement("button");
+	this.switchT.classList.add("switch");
+      this.VisorUI.appendChild(this.switchT);
+     	this.switchT.innerHTML = this.iconesDoSwitch;
+     	this.switchT.addEventListener("click",(e) => {
+     		e.stopPropagation();
+		this.switchT.classList.toggle("switch--ativo");
+	});
+},
+gerenciarEstadoVisorUI(){
+	if (this.visorUIState === "reveal"){
+		this.hide();
+	} else {
+		this.reveal();
+	}
+},
+reveal(){
+	if(this.switchT === null) this.gerenciarSwitchModoTimer();
+	this.VisorUI.classList.add("visorTimer--reveal");
+	this.visorUIState = "reveal";
+	this.switchT.classList.add("switch--reveal")
+},
+hide(){
+	if(this.switchT === null) this.gerenciarSwitchModoTimer();
+	this.VisorUI.classList.remove("visorTimer--reveal");
+  this.switchT.classList.remove("switch--reveal")
+	this.visorUIState = "hidden";
+},
+// o usuario nao sabe de forma clara que existe esse switch, entao, para despertar a curiosidade (e curiosidade leva a clique) eu decidi fazer uma "dica" ao criar a UI
+async tipUI(){
+	//irei adicionar mais coisas aqui (como vibracao e uma animacao por exemplo,mas por enquanto é experimental
+	if (!this.primeiraVez) return;
+	await delay(1000)
+	this.reveal();
+	await delay(2100);
+	this.hide();
+	this.primeiraVez = false;
+	console.log("rodou");
+}
+}
+
+// objeto do modo timer
+const modoTimer = {
+  numeroTimer: null,
+  botaoDiv: null,
+  timestampDiv: null,
+  criarUITimer() {
+  	visorUI.criar();
       this.botaoDiv = document.createElement("div");
       this.botaoDiv.className = "botaoDiv";
       moldura.appendChild(this.botaoDiv);
       this.timestampDiv = document.createElement("div");
       this.timestampDiv.className = "timestampDiv";
       moldura.appendChild(this.timestampDiv);
-      this.atualizarNumeroTimer(0);
-    };
-
-    criarVisorTimer();
   },
   async gerenciarOpacidadeTimerUI() {
   const elementos = [
-    this.VisorUI,
-    this.visorP,
+    visorUI.VisorUI,
+    visorUI.visorP,
     this.botaoDiv,
     this.timestampDiv
   ];
@@ -242,7 +300,7 @@ const modoTimer = {
     let minutosF = String(minutos).padStart(2, "0");
     numero = numero % 60;
     let numeroF = String(numero).padStart(2, "0");
-    this.visorP.innerText = minutosF + ":" + numeroF;
+    visorUI.visorP.innerText = minutosF + ":" + numeroF;
     nowBar.atualizarNowBar();
   },
   // indica a funcao de criarTimestamp
@@ -311,7 +369,7 @@ nowBar = {
   		},
   	atualizarNowBar(){
   		if (!this.isVisible || !this.element) return;
-  		const texto = modoTimer.visorP.innerText;
+  		const texto = visorUI.visorP.innerText;
   		this.element.innerText = texto;
   	},
   	deletar(){
@@ -402,7 +460,7 @@ criarBotaoTimer("reset");
 function criarTimestamp(){
 	if (!modoTimer.rodando) return;
 	const timestamp = document.createElement("div");
-	const volta = modoTimer.visorP.innerText;
+	const volta = visorUI.visorP.innerText;
 	const qtd = modoTimer.timestampDiv.children.length;
 	timestamp.innerText = qtd + "          " + "|" + "          " + volta;
 	modoTimer.timestampDiv.appendChild(timestamp);
@@ -646,6 +704,8 @@ async function animarSaida(el){
 	el.classList.remove("desaparecer");
 }
 function gerenciarAnimacao(el){
+	// isso é meio gambiarra, mas futuramenre pretendo melhorar isso aqui.
+	if (el === modoNotas.mensagemVazio) return
   if(el?.classList.contains("oculto")) {
     animarEntrada(el);
   } else {
