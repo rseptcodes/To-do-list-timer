@@ -6,10 +6,13 @@
 	--sc-color:#ebeeef;
 	--pen-buttonfocus:#1ac783;
 	--red-buttoncolor:rgba(255, 77, 79, 0.99);
+	--red-bordercolor: 3px solid rgba(237,36,72,0.99);
 	--txt-color:#0c0c0d;
 	--icn-color:#f9f9f9;
 	--ts-color:#474d55;
 	--shake-bgcolor:#c8dce8;
+	--shake-borderColor: 2px solid #a1b2ba;
+	--borderBottonColor: #d2dadb;
 }
 [data-theme="dark"]{
   --shadow-small: 0px 1px 3px rgba(0, 0, 0, 0.86);
@@ -18,10 +21,13 @@
 	--sc-color:#1a1b1f;
 	--pen-buttonfocus:#08406e;
 	--red-buttoncolor:rgba(136,10,49,0.99);
+		--red-bordercolor: 3px solid rgba(94,7,43,0.99);
 	--txt-color:#e4e4e7;
 	--icn-color:#e5e6e9;
 	--ts-color:#d8dce0;
 		--shake-bgcolor:#203845;
+		--shake-borderColor: 2px solid #161e28;
+		--borderBottonColor: #0e1111;
 }
 
 
@@ -57,14 +63,15 @@ body {
 	display:flex;
 	align-items: center;
 	justify-content: center;
+	border-bottom:3px solid var(--borderBottonColor);
 	background-color: var(--sc-color);
 	color: var(--txt-color);
 	border-radius: 100%;
-	z-index: 999; /* teste */
+	z-index: 1; /* teste */
 	transition: all 0.5s ease-in-out;
 	box-shadow: var(--shadow-medium);
 }
-.botaoDeCriacao {
+.footerButton {
 	all: unset;
 	position: fixed;
 	bottom: 1dvh;
@@ -74,16 +81,21 @@ body {
 	height: 40px;
 	background-color: var(--sc-color);
 	color: var(--txt-color);
+	border-bottom:3px solid var(--borderBottonColor);
 	border-radius: 100%;
 	z-index: 999;
 	transition: all 0.5s ease-in-out;
 	box-shadow: var(--shadow-medium);
 }
-.botaoDeCriacao.focus{
+.footerButton:active {
+	transform: translateX(-50%) scale(0.5);
+  color: var(--sc-color);
+}
+.footerButton--focus{
 	bottom: 10dvh;
 	background-color: var(--pen-buttonfocus);
 }
-.botaoDeCriacao i {
+.footerButton i {
 	left: 50%;
 	position: relative;
 	transform: translateX(-50%);
@@ -106,10 +118,11 @@ body {
 	position: absolute;
 	right: -12vw;
 	top: 0;
-	right: 5px;
+	right: 10px;
 	transform: translateX(0);
 	border-radius: 100%;
 	background-color: var(--red-buttoncolor);
+	border-bottom: var(--red-bordercolor);
 	opacity: 1;
 	pointer-events: auto;
 	transition: all 0.5s ease-in-out;
@@ -150,6 +163,7 @@ body {
 	width: 93dvw;
 	min-height: 1dvh;
 	max-height: 10dvh;
+	border-bottom:3px solid var(--borderBottonColor);
 	overflow-wrap: break-word;
 	overflow-y: auto;
 	margin-left: 1vh;
@@ -161,6 +175,9 @@ body {
 	padding-left: 8px;
 	user-select: none;
 	transition: all 0.5s ease-in-out;
+}
+.notaFundo:active{
+	transform: scale(0.9);
 }
 .notaFundo.mini {
 	width: 80dvw;
@@ -194,6 +211,8 @@ body {
   padding: 12px 16px;
   font-size: 16px;
   border: none;
+  border-bottom:3px solid var(--borderBottonColor);
+  z-index: 3;
   outline: none;
   color: var(--txt-color);
   background: var(--sc-color);
@@ -214,8 +233,12 @@ body {
   text-align: center;
   box-shadow: var(--shadow-medium);
   transition: all 0.5s ease-in-out;
+  border-bottom:3px solid var(--borderBottonColor);
 }
-
+.visorTimer:active{
+	transform: scale(0.9);
+	box-shadow: var(--shadow-small);
+}
 .visorTimer::after {
   content: "";
   position: absolute;
@@ -232,6 +255,14 @@ body {
 .visorTimer.visorTimer--reveal::after {
   width: 48px; 
 }
+.visorP:active{
+	transform: scale(0.9);
+	color: var(--sc-color);
+}
+.visorTimer--edit{
+	corner-top-right-shape: scoop;
+  border-top-right-radius: 15px ;
+}
 .switch{
 	all:unset;
 	display:flex;
@@ -242,6 +273,7 @@ body {
 	left: 0;
 	opacity: 0;
 	top: 50%;
+	border-bottom:3px solid var(--borderBottonColor);
 	transform: translateY(-50%);
 	z-index: 1000;
 	background-color: var(--sc-color);
@@ -317,6 +349,7 @@ body {
   border-radius: 14px;
   cursor: pointer;
   font-size: 15px;
+  border-bottom:3px solid var(--borderBottonColor);
   transition: 0.5s;
   -webkit-tap-highlight-color:transparent;
   box-shadow: var(--shadow-medium);
@@ -402,15 +435,20 @@ body {
   scrollbar-color: #666 transparent;
 }
 @keyframes notaBalançar {
-  0% { transform: scale(1) rotate(0deg);
+  0% { transform: scale(0.9) rotate(0deg);
   }
-  50% { transform: scale(0.9) rotate(-1deg); 
+  50% {
+  	transform: scale(0.9) rotate(-1deg); 
   	background-color:var(--shake-bgcolor);
+  	border-bottom:var(--shake-borderColor);
   }
-  75% { transform: scale(0.9) rotate(1deg);
+  75% {
+  transform: scale(0.9) rotate(1deg);
   background-color:var(--shake-bgcolor);
+  border-bottom: var(--shake-borderColor);
   }
-  100% { transform: scale(0.9) rotate(0deg); }
+  100% { transform: scale(0.9) rotate(0deg);
+  }
 }
 
 .notaFundo.balançando {
@@ -422,11 +460,13 @@ body {
 @keyframes piscar-sutil {
   0%, 100% {
     background-color: var(--sc-color);
+    border-bottom:var(--borderBottonColor);
     box-shadow: none;
     transform: translateY(0);
   }
   50% {
     background-color: var(--red-buttoncolor);
+    border-bottom: var(--red-bordercolor);
     box-shadow: 0 6px 16px rgba(255,77,79,0.16);
     transform: translateY(-1px);
   }
@@ -565,6 +605,7 @@ body {
   text-indent: 15px;
   border-radius: 50px;
   text-align: center;
+  border-bottom:3px solid var(--borderBottonColor);
   box-shadow: var(--shadow-medium);
   top: -10%;
   left: 50%;
@@ -650,4 +691,15 @@ body {
     transform: translateX(-50%) scale(0);
   }
 }
-
+/* aprimorar dps */
+.overlay {
+	/* background: linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.4) 50%, rgba(0, 0, 0, 0) 100%);
+	z-index: 2;
+	width: 100dvw;
+	height: 100dvh;
+	position: fixed;
+	top: 0;
+	left: 0;
+	animation: fadeIn 1s forwards;
+	*/
+	}
