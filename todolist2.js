@@ -38,7 +38,7 @@ modosSwitch.botaoTrocar.addEventListener("click", async () => {
     } else {
       modosSwitch.mudarTitulo("Notas");
       modosSwitch.modoAtual = "modoNotas";
-      if (modoTimer.rodando && modosSwitch !== modoTimer) nowBar.mostrarNoCentro();
+      if (timerConfig.rodando && modosSwitch !== modoTimer) nowBar.mostrarNoCentro();
     }
 });
   // funcao para indentificar o tema atual e salvar em localStorage
@@ -96,7 +96,7 @@ carregarTema(){
 const modoNotas = {
 	criarUINotas(){
 	this.botaoDeCriacao = document.createElement("button");
-	this.botaoDeCriacao.className = "botaoDeCriacao";
+	this.botaoDeCriacao.className = "footerButton";
     this.botaoDeCriacao.id = "botaoDeCriacao";
     this.botaoDeCriacao.innerHTML = '<i class="fa-solid fa-pen"></i>';
     document.getElementById("moldura").appendChild(this.botaoDeCriacao);
@@ -119,7 +119,7 @@ const modoNotas = {
   ];
 
   for (const el of elementos) {
-  	if (!el) return;
+  	if (!el) continue;
     await gerenciarAnimacao(el);
   	el?.classList.toggle("oculto");
   }
@@ -171,10 +171,13 @@ const visorUI = {
       this.visorP = document.createElement("p");
       this.visorP.className = "visorP";
       this.VisorUI.appendChild(this.visorP);
-      modoTimer.atualizarNumeroTimer(0);
+      timerConfig.mostrar("visorP");
        this.gerenciarSwitchModoTimer();
+       
      this.VisorUI.addEventListener("click", (e) => {
   if (e.target !== this.switchT && !this.switchT?.contains(e.target)) {
+  	if (timerConfig.rodando) return;
+  	navigator.vibrate(1);
     this.gerenciarEstadoVisorUI();
   }
 });
@@ -188,6 +191,9 @@ gerenciarSwitchModoTimer(){
      	this.switchT.addEventListener("click",(e) => {
      		e.stopPropagation();
 		this.switchT.classList.toggle("switch--ativo");
+		navigator.vibrate(2);
+		timerConfig.configSwitch();
+			console.log(timerConfig.config)
 	});
 },
 gerenciarEstadoVisorUI(){
@@ -245,79 +251,149 @@ const modoTimer = {
   ];
 
   for (const el of elementos) {
-  	if (!el) return;
+  	if (!el) continue;
     await gerenciarAnimacao(el);
   	el?.classList.toggle("oculto");
   }
 },
-   inicio: null,
-   agora: null,
-   segundos: null,
-   minutos: null,
-   formatado: null,
-   timerInterval: null,
-   pauseInterval: null,
-   segundos_pausados: 0,
-   rodando: null,
-  timer(){
-	this.inicio = performance.now() - (this.segundos_pausados * 1000);
-	this.timerInterval = setInterval(() => {
-	this.agora = performance.now();
-	this.segundos = (this.agora - this.inicio) / 1000;
-	this.formatado = Math.floor(this.segundos);
-	this.atualizarNumeroTimer(this.formatado);
-	},1000);
-	this.rodando = true;
-	if (this.segundos_pausados === 0){
-		this.timestampInfo();
-		nowBar.criar();
-	} 
-},
-  reset() {
-   clearInterval(this.timerInterval);
-   this.inicio = null;
-   this.agora = null;
-   this.segundos = null;
-   this.formatado = null;
-   this.segundos_pausados = 0;
-   this.atualizarNumeroTimer(0);
-   this.rodando = false;
-   nowBar.deletar();
-	},
-	pause() {
-		this.segundos_pausados = this.formatado;
-		this.atualizarNumeroTimer(this.segundos_pausados);
-		this.formatado = this.segundos_pausados;
-		clearInterval(this.timerInterval);
-		this.rodando = false;
-	},
-	resume(){
-		this.timer(this.segundos_pausados);
-	},
-  atualizarNumeroTimer(numero) {
-  	let minutos;
-  	minutos = Math.floor(numero / 60);
-    let minutosF = String(minutos).padStart(2, "0");
-    numero = numero % 60;
-    let numeroF = String(numero).padStart(2, "0");
-    visorUI.visorP.innerText = minutosF + ":" + numeroF;
-    nowBar.atualizarNowBar();
-  },
   // indica a funcao de criarTimestamp
   async timestampInfo(){
+  	if (document.body.querySelector(".timestampInfo")) return;
   	const timestampInfo = document.createElement("p");
   	timestampInfo.className = "timestampInfo";
   	timestampInfo.innerText = "Deslize para a direita para criar um timestamp";
   	this.timestampDiv.appendChild(timestampInfo);
   	await delay(3000);
   	timestampInfo.offsetHeight;
-  	timestampInfo.className = "timestampInfoFadeOut";
+  	timestampInfo.classList.add( "timestampInfoFadeOut");
   	await delay(1000);
-  	timestampInfo.remove();
+  	timestampInfo?.remove();
   },
+  // funcoes relacionados a marcação do tempo
+criarTimestamp(){
+	if (!timerConfig.rodando || timerConfig.config === "timer") return;
+	const timestamp = document.createElement("div");
+	const volta = visorUI.visorP.innerText;
+	const qtd = document.body.querySelectorAll(".timestamp").length + 1;
+	timestamp.innerText = qtd + "          " + "|" + "          " + volta;
+	this.timestampDiv.appendChild(timestamp);
+	timestamp.className = "timestamp";
+	navigator.vibrate(20);
+	console.log([...modoTimer.timestampDiv.children].map(el => el.className));
+},
+async limparTimestamps() {
+  const timestamps = [...this.timestampDiv.children];
+  const velocidade = Math.max(80, 500 - timestamps.length * 35);
+for (let i = timestamps.length - 1; i >= 0; i--) {
+  const tsChild = timestamps[i];
+  tsChild.classList.add("desaparecer");
+  await delay(velocidade);
+  tsChild.remove();
+}
+},
 };
+// funcoes relacionadas ao timer
+const timerConfig = {
+	inicioDoTimer: null,
+  agora: null,
+  segundos: null,
+  minutos: null,
+  numeroFormatado: null,
+  timerInterval: null,
+  pauseInterval: null,
+  segundos_pausados: 0,
+  rodando: null,
+  config: "stopwatch", // pode ser stopwatch ou timer
+  segundosTotais: 10, // pra testes
+  segundosRestantes: null,
+  configSwitch(){
+  	this.config = (this.config === "stopwatch") ? "timer" : "stopwatch";
+  },
+  rodarTimer(){
+  if(this.timerInterval) return;
+  this.inicioDoTimer = performance.now() - (this.segundos_pausados * 1000);
+  this.rodando = true;
+  if (visorUI.visorUIState === "reveal") visorUI.hide();
+  if (this.segundos_pausados === 0 && this.config !== "timer"){
+		modoTimer.timestampInfo();
+  }
+  this.timerInterval = setInterval(() => {
+	this.agora = performance.now();
+	this.segundos = (this.agora - this.inicioDoTimer) / 1000;
+	this.configurar(this.config);
+	},250);
+  },
+  configurar(){
+		nowBar.criar();
+  	if (this.config === "stopwatch"){
+  	this.mostrar("visorP", this.segundos)
+  	this.mostrar("nowBar", this.segundos)
+  	} else if (this.config === "timer"){
+   if (this.segundosRestantes === null) this.segundosRestantes = this.segundosTotais
+   this.verificarTimerEnd();
+   this.segundosRestantes = Math.ceil(this.segundosTotais - this.segundos);
+   this.mostrar("visorP", this.segundosRestantes)
+   this.mostrar("nowBar", this.segundosRestantes)
+  	}
+  },
+  verificarTimerEnd(){
+  if (this.segundosRestantes <= 0){
+    this.reset();
+    atualizarBotao("resetado");
+  }
+  // meio inutil ainda, rever dps
+  },
+  reset() {
+   clearInterval(this.timerInterval);
+   this.timerInterval = null;
+   this.inicioDoTimer = null;
+   this.agora = null;
+   this.segundos = null;
+   this.minutos = null;
+   this.segundos_pausados = 0;
+   this.mostrar("visorP", this.segundos)
+   this.rodando = false;
+   this.numeroFormatado = null,
+   this.segundosRestantes = null;
+   nowBar.deletar();
+	},
+	pause() {
+		this.segundos_pausados = this.segundos;
+		this.mostrar(this.segundos_pausados);
+		this.segundos = this.segundos_pausados;
+		clearInterval(this.timerInterval);
+		this.timerInterval = null;
+		this.rodando = false;
+	},
+	resume(){
+		this.rodarTimer();
+	},
+	formatar(segundos){
+  const minutos = Math.trunc(segundos / 60);
+  const minsStr = String(minutos).padStart(2, "0");
+  const segs = Math.trunc(segundos % 60);
+  const segsStr = String(segs).padStart(2, "0");
+  this.numeroFormatado = minsStr + ":" + segsStr;
+},
+	mostrar(local,segundos){
+	if(!this.rodando) {
+		visorUI.visorP.innerText = "00:00"
+		return;
+	}
+	this.formatar(segundos);
+	if(local === "visorP") {
+		if(segundos !== null) {
+			visorUI.visorP.innerText = this.numeroFormatado; 
+			} else {
+				visorUI.visorP.innerText = "00:00"
+			}
+	} else if (local === "nowBar") {
+		nowBar.atualizarNowBar();
+	}
+	},
+}
 //funcoes relacionadas á nowBar
-nowBar = {
+const nowBar = {
   	element: null,
   	isVisible: false,
   	estado: "oculto",
@@ -409,22 +485,22 @@ async function criarBotaoTimer(acao){
 // define a funcao dos botoesTimer
 function definirFuncoes(el, acao){
 			if (acao === "pause"){
-			if(modoTimer.rodando) {
-				modoTimer.pause();
+			if(timerConfig.rodando) {
+				timerConfig.pause();
 				el.innerText = "resume";
 				atualizarBotao("pause");
 				} else {
-				modoTimer.resume();
+				timerConfig.resume();
 				el.innerText = "pause";
 				atualizarBotao("pause");
 				}
 		} else if (acao === "iniciar") {
-			if (!modoTimer.rodando) {
-				modoTimer.timer();
+			if (!timerConfig.rodando) {
+				timerConfig.rodarTimer();
 				atualizarBotao("rodando");
 		} 
 		} else if (acao === "reset") {
-			modoTimer.reset();
+			timerConfig.reset();
 			atualizarBotao("resetado")
 		}
 }
@@ -447,7 +523,7 @@ function atualizarBotao(estado){
 		botaoIniciar.innerText = "iniciar";
 		botaoPause.innerText = "";
 		botaoReset.innerText = "";
-		limparTimestamps();
+		modoTimer.limparTimestamps();
 	} else if (estado === "pause"){
 		botaoIniciar.classList.toggle("piscando")
 	}
@@ -456,29 +532,8 @@ criarBotaoTimer("pause");
 criarBotaoTimer("iniciar");
 criarBotaoTimer("reset");
 
-// funcoes relacionados a marcação do tempo
-function criarTimestamp(){
-	if (!modoTimer.rodando) return;
-	const timestamp = document.createElement("div");
-	const volta = visorUI.visorP.innerText;
-	const qtd = modoTimer.timestampDiv.children.length;
-	timestamp.innerText = qtd + "          " + "|" + "          " + volta;
-	modoTimer.timestampDiv.appendChild(timestamp);
-	timestamp.className = "timestamp";
-	navigator.vibrate(20);
-} 
-async function limparTimestamps() {
-  const timestamps = [...modoTimer.timestampDiv.children];
-  const velocidade = Math.max(80, 500 - timestamps.length * 35);
-for (let i = timestamps.length - 1; i >= 0; i--) {
-  const tsChild = timestamps[i];
-  tsChild.classList.add("desaparecer");
-  await delay(velocidade);
-  tsChild.remove();
-}
-}
-
 // funcao relacionado ao deslizamento horizontal para criarTimestamp
+
 async function verificarDeslizamentoHorizontal(elemento){
 	await delay(0);
   const distancia = 80;
@@ -493,32 +548,37 @@ async function verificarDeslizamentoHorizontal(elemento){
     const diff = fim - inicio;
 
     if (diff >= distancia) {
-      criarTimestamp();
+      modoTimer.criarTimestamp();
     }
   });
 }
 verificarDeslizamentoHorizontal(moldura);
 
-function ativarOInput(index){
+function ativarOInput(index, placeholder){
   modoNotas.ultimoIndexSalvo = (typeof index === "number") ? index : modoNotas.ultimoIndexSalvo;
-
   if (document.querySelector(".inputNotas")){
     let textoInput = document.querySelector(".inputNotas").value.trim();
     if (textoInput === ""){
       textoInput = "Nova nota";
-    }
+    } 
     fecharOInput(textoInput);
     return;
   }
 
   const inputNotas = document.createElement("textarea");
-  inputNotas.placeholder = "Nova nota";
+  if (!placeholder) {
+  	inputNotas.placeholder = "Nova nota";
+  } else {
+  	inputNotas.value = placeholder;
+  	inputNotas.placeholder = placeholder;
+  }
   inputNotas.classList.add("inputNotas");
   document.getElementById("moldura").appendChild(inputNotas);
   focusInput(inputNotas);
 }
 function focusInput(input){
   input.focus();
+  inputOverlay();
   // se for mobile deixa o input visivel
   const isMobile = /Mobi|Android/i.test(navigator.userAgent);
   if (!isMobile) return;
@@ -532,8 +592,8 @@ function focusInput(input){
 }
 // efeito visual para tornar mais dinamico
 function botaoDeCriacaoEmFocus(el){
-	el.classList.toggle("focus");
-	if(el.classList.contains ("focus")) el.innerHTML = '<i class="fa-solid fa-check"></i>'; else {
+	el.classList.toggle("footerButton--focus");
+	if(el.classList.contains ("footerButton--focus")) el.innerHTML = '<i class="fa-solid fa-check"></i>'; else {
 		this.botaoDeCriacao.innerHTML = '<i class="fa-solid fa-pen"></i>';
 	}
 }
@@ -542,7 +602,7 @@ function fecharOInput(texto){
   if (document.querySelector(".inputNotas")){
     document.querySelectorAll(".inputNotas").forEach(el => el.remove());
   }
-
+  deletarOverlay();
   const index = modoNotas.ultimoIndexSalvo;
   const nota = salvarTextoEmArray(texto, index);
   renderizarNotas(nota, index);
@@ -607,7 +667,7 @@ function verificarToque(el,id) {
     holdTimer = setTimeout(() => {
       el.classList.add("balançando");
       navigator.vibrate(30);
-    }, 1200);
+    }, 800);
   });
 
   el.addEventListener("touchend", () => {
@@ -624,6 +684,7 @@ function verificarToque(el,id) {
 async function editarNota(el, id){
   if (document.querySelector(".inputNotas")) return;
   const index = modoNotas.notasArray.findIndex(n => n.id === id);
+  const textoPlaceholder = modoNotas.notasArray[index].text
   console.log("editar -> index encontrado:", index);
   modoNotas.ultimoIndexSalvo = index;
   const notaPApagar = document.querySelector(`[data-id="${id}"]`);
@@ -633,8 +694,7 @@ async function editarNota(el, id){
     await delay(200);
   }
   await apagarNotas(id);
-  ativarOInput();
-
+  ativarOInput(index, textoPlaceholder);
   botaoDeCriacaoEmFocus(modoNotas.botaoDeCriacao);
 }
 
@@ -712,3 +772,26 @@ function gerenciarAnimacao(el){
     animarSaida(el);
   }
 }
+
+// experimental, reorganizar efeitos depois
+function inputOverlay(fechar){
+	if (fechar) {
+		overlay?.remove();
+		return
+	}
+	const overlay = document.createElement("div");
+	console.log("funcionou?")
+	overlay.className = "overlay";
+	moldura.appendChild(overlay);
+	//overlay.addEventListener("click", () => {
+		//overlay?.remove();
+		//console.log("funcionou")
+	//});
+}
+
+function deletarOverlay(){
+	const overlay = document.querySelector(".overlay")
+	if(overlay) {
+		overlay.remove();
+	}
+			}
