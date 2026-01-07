@@ -95,6 +95,10 @@ body {
 	bottom: 10dvh;
 	background-color: var(--pen-buttonfocus);
 }
+.footerButton--hidden{
+	opacity: 0;
+	pointer-events: none;
+}
 .footerButton i {
 	left: 50%;
 	position: relative;
@@ -702,4 +706,63 @@ body {
 	left: 0;
 	animation: fadeIn 1s forwards;
 	*/
-	}
+}
+
+
+/* experimental */
+.editMenu{
+	z-index: 10;
+  position: fixed;
+  display: flex;
+  bottom: 0;
+  margin-bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 50dvw;
+  height: 5dvh;
+  padding: 12px 16px;
+  font-size: 16px;
+  border: none;
+  justify-content: center;
+  gap: 4dvh;
+  align-items: center;
+  border-bottom:3px solid var(--borderBottonColor);
+  z-index: 3;
+  outline: none;
+  color: var(--txt-color);
+  background: var(--sc-color);
+  box-shadow: var(--shadow-medium);
+  border-radius: 12px;
+
+}
+.inputEditValue {
+	all:unset;
+	font-family: 'Poppins', Sans-Serif;
+	background-color: var(--bg-color);
+	color: var(--txt-color);
+	border-bottom: var(--borderBottonColor);
+	box-shadow: var(--shadow-small);
+	z-index: 10;
+	text-align: center;
+  width: 15dvw;
+  font-size: 30px;
+  height: 6dvh;
+  border-radius: 10px;
+  transition: all 0.6s ease-in-out;
+}
+.inputEditValue:focus{
+	transform: scale(1.02);
+	border: 3px solid var(--shake-bgcolor);
+}
+.inputEditValue:active{
+	transform: scale(1.05);
+}
+.inputEditValue::placeholder{
+	transition: all 0.6s ease-in-out;
+	opacity: 0.4;
+	transform: translateY(0);
+}
+.inputEditValue:focus::placeholder {
+	transform: translateY(-5%);
+	opacity: 0;
+}
