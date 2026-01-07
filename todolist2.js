@@ -6,6 +6,14 @@ const modosSwitch = {
   header: null,
   modoAtual: null,
   temaAtual: "white",
+  atualizarModoAtual(modoAtual){
+  	localStorage.setItem("modoAtual", modoAtual);
+  },
+  carregarModoAtual(){
+  this.modoAtual = localStorage.getItem("modoAtual");
+  console.log(this.modoAtual);
+  if(this.modoAtual === null) this.modoAtual = "modoNotas";
+  },
   // cria o header
   criarHeader() {
   	this.header = document.createElement("div");
@@ -19,6 +27,8 @@ const modosSwitch = {
     this.botaoTrocar.classList.add("botaoTrocar");
     this.botaoTrocar.innerHTML = `<i class="fa-solid fa-clock"></i>`;
     this.header.appendChild(this.botaoTrocar);
+    botaoFooter.criar();
+    botaoFooter.update();
     this.botaoTema = document.createElement("button");
     this.botaoTema.className = "botaoTrocar";
     this.header.appendChild(this.botaoTema);
@@ -31,6 +41,9 @@ modosSwitch.botaoTrocar.addEventListener("click", async () => {
 	if(modoNotas.listaNotas.classList.contains("oculto")) {
       modosSwitch.mudarTitulo("Timer");
       modosSwitch.modoAtual = "modoTimer";
+      modosSwitch.atualizarModoAtual(modosSwitch.modoAtual);
+      if (document.body.querySelector(".inputNotas")) fecharOInput();
+      if (botaoFooter.botaoFooter)botaoFooter.update();
       visorUI.tipUI();
       if (nowBar.element){
       	nowBar.esconder();
@@ -38,6 +51,8 @@ modosSwitch.botaoTrocar.addEventListener("click", async () => {
     } else {
       modosSwitch.mudarTitulo("Notas");
       modosSwitch.modoAtual = "modoNotas";
+      modosSwitch.atualizarModoAtual(modosSwitch.modoAtual);
+      if (botaoFooter.botaoFooter)botaoFooter.update();
       if (timerConfig.rodando && modosSwitch !== modoTimer) nowBar.mostrarNoCentro();
     }
 });
@@ -85,25 +100,75 @@ carregarTema(){
   	if(this.modoAtual === "modoNotas"){
   		modoTimer.gerenciarOpacidadeTimerUI();
   		modosSwitch.mudarTitulo("Notas");
+  		
   	} else if (this.modoAtual === "modoTimer") {
   		modoNotas.gerenciarOpacidadeNotasUI();
-  		modosSwitch.mudarTitulo();
+  		modosSwitch.mudarTitulo("Timer");
   	}
   	modosSwitch.carregarTema();
   }
 };
 // objeto do modo de notas
+const botaoFooter = {
+	botaoFooter: null,
+	emFocus: false,
+	criar(){
+		this.botaoFooter = document.createElement("button");
+	this.botaoFooter.classList.add( "footerButton");
+    //this.botaoFooter.id = "botaoDeCriacao";
+    this.botaoFooter.innerHTML = '<i class="fa-solid fa-pen"></i>';
+    document.getElementById("moldura").appendChild(this.botaoFooter);
+    if(this.botaoFooter){
+    	this.botaoFooter.addEventListener("click", () => {
+    		this.acao();
+    	});
+    }
+	},
+	acao(){
+		if(this.botaoFooter === null) this.criar();
+		if (modosSwitch.modoAtual === "modoNotas"){
+			ativarOInput();
+			this.focus();
+		} else if (modosSwitch.modoAtual === "modoTimer" && !timerConfig.rodando){
+			editTimerValue.criarEditUI();
+			if (this.emFocus){
+				editTimerValue.transformarValorInput();
+			}
+			this.focus();
+		}
+	},
+	focus(){
+	this.botaoFooter.classList.toggle("footerButton--focus");
+	if(this.botaoFooter.classList.contains ("footerButton--focus")) {
+		this.emFocus = true;
+		this.botaoFooter.innerHTML = '<i class="fa-solid fa-check"></i>';
+		} else {
+			this.emFocus = false;
+			this.botaoFooter.innerHTML = '<i class="fa-solid fa-pen"></i>';
+		}
+	},
+	update(){
+		if(modosSwitch.modoAtual === "modoNotas"){
+			this.reveal();
+			return;
+		}
+		if (timerConfig.config === "stopwatch"){
+			this.hide();
+			console.log("esconde");
+		} else if (timerConfig.config === "timer"){
+			this.reveal();
+			console.log("revelou")
+		}
+	},
+	hide(){
+		this.botaoFooter.classList.add("footerButton--hidden");
+	},
+	reveal(){
+		this.botaoFooter.classList.remove("footerButton--hidden");
+	}
+};
 const modoNotas = {
 	criarUINotas(){
-	this.botaoDeCriacao = document.createElement("button");
-	this.botaoDeCriacao.className = "footerButton";
-    this.botaoDeCriacao.id = "botaoDeCriacao";
-    this.botaoDeCriacao.innerHTML = '<i class="fa-solid fa-pen"></i>';
-    document.getElementById("moldura").appendChild(this.botaoDeCriacao);
-    if (modoNotas.botaoDeCriacao)modoNotas.botaoDeCriacao.addEventListener("click", () => {
-  ativarOInput();
-  botaoDeCriacaoEmFocus(this.botaoDeCriacao);
-});
     this.listaNotas = document.createElement("div");
     this.listaNotas.className = "listaNotas";
     this.listaNotas.id = "listaNotas";
@@ -113,7 +178,6 @@ const modoNotas = {
 	},
 	async gerenciarOpacidadeNotasUI() {
   const elementos = [
-    this.botaoDeCriacao,
     this.listaNotas,
     this.mensagemVazio
   ];
@@ -144,15 +208,15 @@ const modoNotas = {
 			this.mensagemVazio = null;
 		}
 	},
-	botaoDeCriacao: null,
 	listaNotas: null,
 	notasArray: [],
 	ultimoIndexSalvo: null
 };
 // cria o header e inicia o modo quando a pagina carregar
 window.addEventListener("DOMContentLoaded", () => {
+	modosSwitch.carregarModoAtual();
 	modosSwitch.criarHeader();
-  modosSwitch.iniciarModo("modoNotas");
+  modosSwitch.iniciarModo(modosSwitch.modoAtual);
 });
 // objeto do visor
 const visorUI = {
@@ -193,7 +257,8 @@ gerenciarSwitchModoTimer(){
 		this.switchT.classList.toggle("switch--ativo");
 		navigator.vibrate(2);
 		timerConfig.configSwitch();
-			console.log(timerConfig.config)
+		if (botaoFooter.botaoFooter)botaoFooter.update();
+	  console.log(timerConfig.config)
 	});
 },
 gerenciarEstadoVisorUI(){
@@ -324,7 +389,7 @@ const timerConfig = {
 	},250);
   },
   configurar(){
-		nowBar.criar();
+		if (!nowBar.element)nowBar.criar();
   	if (this.config === "stopwatch"){
   	this.mostrar("visorP", this.segundos)
   	this.mostrar("nowBar", this.segundos)
@@ -338,6 +403,7 @@ const timerConfig = {
   },
   verificarTimerEnd(){
   if (this.segundosRestantes <= 0){
+  	alert("fim do tempo")
     this.reset();
     atualizarBotao("resetado");
   }
@@ -351,8 +417,8 @@ const timerConfig = {
    this.segundos = null;
    this.minutos = null;
    this.segundos_pausados = 0;
-   this.mostrar("visorP", this.segundos)
    this.rodando = false;
+   this.mostrar("visorP", this.segundos)
    this.numeroFormatado = null,
    this.segundosRestantes = null;
    nowBar.deletar();
@@ -377,7 +443,12 @@ const timerConfig = {
 },
 	mostrar(local,segundos){
 	if(!this.rodando) {
-		visorUI.visorP.innerText = "00:00"
+		if (segundos){
+		this.formatar(segundos);
+		visorUI.visorP.innerText = this.numeroFormatado;
+		} else {
+			visorUI.visorP.innerText = "00:00";
+		}
 		return;
 	}
 	this.formatar(segundos);
@@ -532,6 +603,59 @@ criarBotaoTimer("pause");
 criarBotaoTimer("iniciar");
 criarBotaoTimer("reset");
 
+const editTimerValue = {
+	editMenu: null,
+	editValue: null,
+	minInput: null,
+	secInput: null,
+	criarEditUI(){
+		if(this.editMenu !== null || this.minInput !== null || this.secInput !== null) return;
+		this.editMenu = document.createElement("div");
+		this.editMenu.className = "editMenu";
+		moldura.appendChild(this.editMenu);
+		this.minInput = this.criarInput(this.minInput);
+		this.secInput = this.criarInput(this.secInput);
+	},
+	criarInput(input){
+		input = document.createElement("input");
+		input.required = true;
+		input.className = "inputEditValue";
+		input.maxLength = "2";
+		input.addEventListener("click",() => {
+			focusInput(input)
+		});
+		if (document.querySelectorAll(".inputEditValue").length === 0) input.placeholder = "MM"; else input.placeholder = "SS";
+		this.editMenu.appendChild(input);
+		input.addEventListener("keydown", (e) => {
+  if (
+    !/[0-9]/.test(e.key) &&
+    e.key !== "Backspace"
+  ) {
+    e.preventDefault()
+  }
+})
+    input.addEventListener("input", () => {
+  input.value = input.value.replace(/\D/g, "")
+})
+return input;
+	},
+	async transformarValorInput(){
+		const minutos = this.minInput.value !== "" ? this.minInput.value : "1";
+   const segundos = this.secInput.value !== "" ? this.secInput.value : "00";
+   
+		timerConfig.segundosTotais = (minutos * 60) + Number(segundos);
+		console.log(timerConfig.segundosTotais);
+		timerConfig.mostrar("visorP", timerConfig.segundosTotais);
+		this.deletarEditUI();
+	},
+	deletarEditUI(){
+		if (this.editMenu === null) return;
+		this.editMenu.remove();
+		this.editMenu = null;
+		this.secInput = null;
+		this.minInput = null;
+	},
+}
 // funcao relacionado ao deslizamento horizontal para criarTimestamp
 
 async function verificarDeslizamentoHorizontal(elemento){
@@ -590,18 +714,16 @@ function focusInput(input){
     });
   }, 300);
 }
-// efeito visual para tornar mais dinamico
-function botaoDeCriacaoEmFocus(el){
-	el.classList.toggle("footerButton--focus");
-	if(el.classList.contains ("footerButton--focus")) el.innerHTML = '<i class="fa-solid fa-check"></i>'; else {
-		this.botaoDeCriacao.innerHTML = '<i class="fa-solid fa-pen"></i>';
-	}
-}
 // fecha o input e guarda o texto
 function fecharOInput(texto){
   if (document.querySelector(".inputNotas")){
     document.querySelectorAll(".inputNotas").forEach(el => el.remove());
   }
+  console.log(texto)
+  if (!texto){
+  	botaoFooter.focus();
+  	return;
+  } 
   deletarOverlay();
   const index = modoNotas.ultimoIndexSalvo;
   const nota = salvarTextoEmArray(texto, index);
@@ -695,7 +817,7 @@ async function editarNota(el, id){
   }
   await apagarNotas(id);
   ativarOInput(index, textoPlaceholder);
-  botaoDeCriacaoEmFocus(modoNotas.botaoDeCriacao);
+  botaoFooter.focus();
 }
 
 // efeitos
@@ -794,4 +916,4 @@ function deletarOverlay(){
 	if(overlay) {
 		overlay.remove();
 	}
-			}
+		}
