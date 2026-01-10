@@ -67,7 +67,7 @@ body {
 	background-color: var(--sc-color);
 	color: var(--txt-color);
 	border-radius: 100%;
-	z-index: 1; /* teste */
+	z-index: 5; 
 	transition: all 0.5s ease-in-out;
 	box-shadow: var(--shadow-medium);
 }
@@ -83,7 +83,7 @@ body {
 	color: var(--txt-color);
 	border-bottom:3px solid var(--borderBottonColor);
 	border-radius: 100%;
-	z-index: 999;
+	z-index: 11;
 	transition: all 0.5s ease-in-out;
 	box-shadow: var(--shadow-medium);
 }
@@ -109,7 +109,7 @@ body {
 	color: var(--txt-color);
 	text-align: center;
 	white-space: nowrap;
-	z-index: 1000;
+	z-index: 5;
 	animation: fadeIn 1s ease forwards;
 }
 .mensagemVazio.oculto{
@@ -205,7 +205,7 @@ body {
 	flex-direction: column;
 }
 .inputNotas {
-	z-index: 10;
+	z-index: 1000;
   position: fixed;
   bottom: 0;
   margin-bottom: 20px;
@@ -216,7 +216,7 @@ body {
   font-size: 16px;
   border: none;
   border-bottom:3px solid var(--borderBottonColor);
-  z-index: 3;
+  z-index: 9;
   outline: none;
   color: var(--txt-color);
   background: var(--sc-color);
@@ -279,7 +279,7 @@ body {
 	top: 50%;
 	border-bottom:3px solid var(--borderBottonColor);
 	transform: translateY(-50%);
-	z-index: 1000;
+	z-index: 2;
 	background-color: var(--sc-color);
 	width: 27px;
 	height: 52px;
@@ -292,7 +292,7 @@ body {
 	position:absolute;
 	top:50%;
 	left:50%;
-	z-index: 1002;
+	z-index: 3;
 	transform: translate(-50%, -50%);
 	width: 80%;
 	height: 1px;
@@ -306,7 +306,7 @@ body {
 .switch::before{
 	content: "";
 	width: 30px;
-	z-index: 1001;
+	z-index: 2;
 	height: 30px;
 	border-radius: 15px;
 	position: absolute;
@@ -604,7 +604,7 @@ body {
   background-color: var(--sc-color);
   color: var(--txt-color);
   line-height: 6dvh;
-  z-index: 100000;
+  z-index: 8;
   font-size: 22px;
   text-indent: 15px;
   border-radius: 50px;
@@ -711,7 +711,7 @@ body {
 
 /* experimental */
 .editMenu{
-	z-index: 10;
+	z-index: 9;
   position: fixed;
   display: flex;
   bottom: 0;
@@ -727,7 +727,6 @@ body {
   gap: 4dvh;
   align-items: center;
   border-bottom:3px solid var(--borderBottonColor);
-  z-index: 3;
   outline: none;
   color: var(--txt-color);
   background: var(--sc-color);
@@ -766,3 +765,70 @@ body {
 	transform: translateY(-5%);
 	opacity: 0;
 }
+/* ===== OVERLAY BASE ===== */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 8;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  transition: all 1s ease-in-out;
+  animation: overlayIn 0.25s ease forwards;
+}
+
+/* ===== TIPOS ===== */
+
+/* input: suave, não intimida */
+.overlay--input {
+  background: rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(3px);
+}
+
+/* timer: pesado, chama atenção */
+.overlay--timer {
+  pointer-events: auto;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(6px);
+  animation: overlayPulse 1.2s ease-in-out infinite;
+}
+
+/* ===== SAÍDA ===== */
+.overlay--hidden {
+  pointer-events: none;
+  animation: overlayOut 0.5s ease-in-out forwards;
+}
+
+/* ===== ANIMAÇÕES ===== */
+
+@keyframes overlayIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes overlayOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes overlayPulse {
+  0% {
+    opacity: 0.6;
+    z-index: 11;
+  }
+  50% {
+    opacity: 0.85;
+    z-index: 11;
+  }
+  100% {
+    opacity: 0.6;
+    z-index: 11;
+  }
+	  }
