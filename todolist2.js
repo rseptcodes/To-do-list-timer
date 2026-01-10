@@ -137,7 +137,7 @@ const botaoFooter = {
 			}
 			this.focus();
 		} else if (modosSwitch.modoAtual === "modoTimer" && !timerConfig.rodando){
-			if(!overlay.element || !overlay.element.classList.contains("overlay--hidden")) overlay.hide(); else overlay.show();
+			if(!overlay.element || !overlay.element.classList.contains("overlay--hidden")) overlay.hide(); else overlay.show(true);
 			editTimerValue.criarEditUI();
 			if (this.emFocus){
 				editTimerValue.transformarValorInput();
