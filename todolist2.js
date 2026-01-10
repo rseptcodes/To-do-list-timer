@@ -951,8 +951,9 @@ async function verificarDeslizamentoVertical(elemento){
 	});
 	elemento.addEventListener("touchend", (e) => {
 		const fim = e.changedTouches[0].clientY;
-		const diff = fim - inicio;
-		if (diff > distancia){
+		const deslocamentoY = inicio - fim;
+		// para nao conflitar com o gesto de atualizar pagina no mobile, o gesto de encerrar o timer tem que ser para cima
+		if (deslocamentoY > distancia){
 			timerConfig.timerEnd();
 			console.log("toque")
 		};
