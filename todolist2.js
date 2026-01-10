@@ -29,6 +29,7 @@ const modosSwitch = {
     this.header.appendChild(this.botaoTrocar);
     botaoFooter.criar();
     botaoFooter.update();
+    overlay.criar();
     this.botaoTema = document.createElement("button");
     this.botaoTema.className = "botaoTrocar";
     this.header.appendChild(this.botaoTema);
@@ -128,8 +129,15 @@ const botaoFooter = {
 		if(this.botaoFooter === null) this.criar();
 		if (modosSwitch.modoAtual === "modoNotas"){
 			ativarOInput();
+			if(this.emFocus && (!overlay.element || !overlay.element.classList.contains("overlay--hidden"))){
+				overlay.hide();
+			} else {
+				overlay.show(true);
+				// ao editar nota, ele nao faz o hide porque nao é derivado da acao do usuario, comportamento plausivel com a funcao, mas errado, irei consertar dps
+			}
 			this.focus();
 		} else if (modosSwitch.modoAtual === "modoTimer" && !timerConfig.rodando){
+			if(!overlay.element || !overlay.element.classList.contains("overlay--hidden")) overlay.hide(); else overlay.show();
 			editTimerValue.criarEditUI();
 			if (this.emFocus){
 				editTimerValue.transformarValorInput();
@@ -369,7 +377,7 @@ const timerConfig = {
   segundos_pausados: 0,
   rodando: null,
   config: "stopwatch", // pode ser stopwatch ou timer
-  segundosTotais: 10, // pra testes
+  segundosTotais: 1, // pra testes
   segundosRestantes: null,
   configSwitch(){
   	this.config = (this.config === "stopwatch") ? "timer" : "stopwatch";
@@ -403,11 +411,14 @@ const timerConfig = {
   },
   verificarTimerEnd(){
   if (this.segundosRestantes <= 0){
-  	alert("fim do tempo")
-    this.reset();
-    atualizarBotao("resetado");
+  	if(!overlay.element || overlay.element.classList.contains("overlay--hidden")) overlay.show(false);
+  	navigator.vibrate(30);
   }
-  // meio inutil ainda, rever dps
+  },
+  timerEnd(){
+  	overlay.hide();
+  	this.reset();
+    atualizarBotao("resetado");
   },
   reset() {
    clearInterval(this.timerInterval);
@@ -438,8 +449,8 @@ const timerConfig = {
   const minutos = Math.trunc(segundos / 60);
   const minsStr = String(minutos).padStart(2, "0");
   const segs = Math.trunc(segundos % 60);
-  const segsStr = String(segs).padStart(2, "0");
-  this.numeroFormatado = minsStr + ":" + segsStr;
+  const segsStr = String(Math.abs(segs)).padStart(2, "0");
+  if (segs > 0) this.numeroFormatado = minsStr + ":" + segsStr; else this.numeroFormatado = "-" + minsStr + ":" + segsStr;
 },
 	mostrar(local,segundos){
 	if(!this.rodando) {
@@ -702,7 +713,6 @@ function ativarOInput(index, placeholder){
 }
 function focusInput(input){
   input.focus();
-  inputOverlay();
   // se for mobile deixa o input visivel
   const isMobile = /Mobi|Android/i.test(navigator.userAgent);
   if (!isMobile) return;
@@ -724,7 +734,6 @@ function fecharOInput(texto){
   	botaoFooter.focus();
   	return;
   } 
-  deletarOverlay();
   const index = modoNotas.ultimoIndexSalvo;
   const nota = salvarTextoEmArray(texto, index);
   renderizarNotas(nota, index);
@@ -896,24 +905,57 @@ function gerenciarAnimacao(el){
 }
 
 // experimental, reorganizar efeitos depois
-function inputOverlay(fechar){
-	if (fechar) {
-		overlay?.remove();
-		return
-	}
-	const overlay = document.createElement("div");
-	console.log("funcionou?")
-	overlay.className = "overlay";
-	moldura.appendChild(overlay);
-	//overlay.addEventListener("click", () => {
-		//overlay?.remove();
-		//console.log("funcionou")
-	//});
-}
+const overlay = {
+	element: null,
+  criar(){
+  	if(this.element !== null) return;
+  	this.element = document.createElement("div");
+  	this.element.className = "overlay";
+  	moldura.appendChild(this.element);
+  	this.element.addEventListener("click", () => {
+  		if(this.element?.classList.contains("overlay--timer")) return;
+  if (document.querySelector(".inputNotas")) {
+    fecharOInput();
+  }
+  if (document.querySelector(".inputEditValue")) {
+    editTimerValue.deletarEditUI();
+    if(botaoFooter.emFocus) botaoFooter.focus();
+  }
+  this.hide();
+});
+  	this.hide();
+  },
+  show(podeTocar){
+  	if(this.element === null) this.criar();
+  	if(!podeTocar){
+  		this.element.classList.add("overlay--timer");
+  		} else {
+  			this.element.classList.remove("overlay--timer");
+  		}
+		this.element.classList.remove("overlay--hidden");
+  },
+	async hide(){
+		if(this.element === null) return;
+		this.element.classList.add("overlay--hidden");
+	},
+};
 
-function deletarOverlay(){
-	const overlay = document.querySelector(".overlay")
-	if(overlay) {
-		overlay.remove();
-	}
-		}
+// MUITO experimental, pode quebrar
+async function verificarDeslizamentoVertical(elemento){
+	const distancia = 50;
+	let inicio = 0;
+	await delay(0);
+	elemento.addEventListener("touchstart", (e) =>{
+
+		inicio = e.touches[0].clientY;
+	});
+	elemento.addEventListener("touchend", (e) => {
+		const fim = e.changedTouches[0].clientY;
+		const diff = fim - inicio;
+		if (diff > distancia){
+			timerConfig.timerEnd();
+			console.log("toque")
+		};
+	});
+}
+verificarDeslizamentoVertical(moldura);
