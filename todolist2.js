@@ -245,7 +245,7 @@ const visorUI = {
       this.VisorUI.appendChild(this.visorP);
       timerConfig.mostrar("visorP");
        this.gerenciarSwitchModoTimer();
-       
+       if(!botaoTimer.existe)botaoTimer.init();
      this.VisorUI.addEventListener("click", (e) => {
   if (e.target !== this.switchT && !this.switchT?.contains(e.target)) {
   	if (timerConfig.rodando) return;
@@ -253,6 +253,14 @@ const visorUI = {
     this.gerenciarEstadoVisorUI();
   }
 });
+},
+visorUIFocusON(){
+	if (this.VisorUI === null) return;
+	this.VisorUI.classList.add("visorTimer--focus");
+},
+visorUIFocusOFF(){
+	if (this.VisorUI === null) return;
+	this.VisorUI.classList.remove("visorTimer--focus");
 },
 gerenciarSwitchModoTimer(){
 	//  switch ira servir para trocar a funcao do timer, podendo ser cronometro ou alarme.
@@ -394,7 +402,7 @@ const timerConfig = {
 	this.agora = performance.now();
 	this.segundos = (this.agora - this.inicioDoTimer) / 1000;
 	this.configurar(this.config);
-	},250);
+	},500);
   },
   configurar(){
 		if (!nowBar.element)nowBar.criar();
@@ -412,13 +420,15 @@ const timerConfig = {
   verificarTimerEnd(){
   if (this.segundosRestantes <= 0){
   	if(!overlay.element || overlay.element.classList.contains("overlay--hidden")) overlay.show(false);
-  	navigator.vibrate(30);
+  	visorUI.visorUIFocusON();
+  	navigator.vibrate(100);
   }
   },
   timerEnd(){
   	overlay.hide();
+  	visorUI.visorUIFocusOFF();
   	this.reset();
-    atualizarBotao("resetado");
+    botaoTimer.atualizar("resetado");
   },
   reset() {
    clearInterval(this.timerInterval);
@@ -549,8 +559,9 @@ const nowBar = {
   	}, 300);
 },
 };
-// funcao que cria os botoesTimer
-async function criarBotaoTimer(acao){
+const botaoTimer = {
+	existe: false,
+	async criarBotaoTimer(acao){
 	if (!modoTimer.botaoDiv){
 		await delay(0);
 	}
@@ -559,61 +570,66 @@ async function criarBotaoTimer(acao){
 	modoTimer.botaoDiv.appendChild(botaoTimer);
 	botaoTimer.innerText = acao;
 	botaoTimer.addEventListener("click",() => {
-  definirFuncoes(botaoTimer, acao);
+  this.definirFuncoes(botaoTimer, acao);
   navigator.vibrate(2);
 	});
-	atualizarBotao("resetado");
-}
+	this.atualizar("resetado");
+	this.existe = true; 
+},
 // define a funcao dos botoesTimer
-function definirFuncoes(el, acao){
+definirFuncoes(el, acao){
 			if (acao === "pause"){
 			if(timerConfig.rodando) {
 				timerConfig.pause();
 				el.innerText = "resume";
-				atualizarBotao("pause");
+				this.atualizar("pause");
 				} else {
 				timerConfig.resume();
 				el.innerText = "pause";
-				atualizarBotao("pause");
+				this.atualizar("pause");
 				}
 		} else if (acao === "iniciar") {
 			if (!timerConfig.rodando) {
 				timerConfig.rodarTimer();
-				atualizarBotao("rodando");
+		this.atualizar("rodando");
 		} 
 		} else if (acao === "reset") {
 			timerConfig.reset();
-			atualizarBotao("resetado")
+		this.atualizar("resetado")
 		}
-}
+},
 // minimiza ou amplia
-function atualizarBotao(estado){
-	const botaoIniciar = document.querySelector(".iniciar");
-	const botaoPause = document.querySelector(".pause");
-	const botaoReset = document.querySelector(".reset");
+atualizar(estado){
+	const botaoTimerObj = {
+		botaoIniciar: document.querySelector(".iniciar"),
+		botaoPause: document.querySelector(".pause"),
+		botaoReset:document.querySelector(".reset"),
+	};
 	if (estado === "rodando") {
-		botaoIniciar.classList.add("minimizado", "piscando")
-		botaoPause.classList.remove("minimizado");
-		botaoReset.classList.remove("minimizado");
-		botaoIniciar.innerText = "";
-		botaoPause.innerText = "pause";
-		botaoReset.innerText = "reset";
+		botaoTimerObj.botaoIniciar.classList.add("minimizado", "piscando")
+		botaoTimerObj.botaoPause.classList.remove("minimizado");
+		botaoTimerObj.botaoReset.classList.remove("minimizado");
+		botaoTimerObj.botaoIniciar.innerText = "";
+		botaoTimerObj.botaoPause.innerText = "pause";
+		botaoTimerObj.botaoReset.innerText = "reset";
 	} else if (estado === "resetado"){
-		botaoIniciar.classList.remove("minimizado")
-		botaoPause.classList.add("minimizado");
-		botaoReset.classList.add("minimizado");
-		botaoIniciar.innerText = "iniciar";
-		botaoPause.innerText = "";
-		botaoReset.innerText = "";
+		botaoTimerObj.botaoIniciar.classList.remove("minimizado")
+		botaoTimerObj.botaoPause.classList.add("minimizado");
+		botaoTimerObj.botaoReset.classList.add("minimizado");
+		botaoTimerObj.botaoIniciar.innerText = "iniciar";
+		botaoTimerObj.botaoPause.innerText = "";
+		botaoTimerObj.botaoReset.innerText = "";
 		modoTimer.limparTimestamps();
 	} else if (estado === "pause"){
-		botaoIniciar.classList.toggle("piscando")
+		botaoTimerObj.botaoIniciar.classList.toggle("piscando")
 	}
-}
-criarBotaoTimer("pause");
-criarBotaoTimer("iniciar");
-criarBotaoTimer("reset");
-
+},
+init(){
+this.criarBotaoTimer("pause");
+this.criarBotaoTimer("iniciar");
+this.criarBotaoTimer("reset");
+},
+};
 const editTimerValue = {
 	editMenu: null,
 	editValue: null,
@@ -667,28 +683,6 @@ return input;
 		this.minInput = null;
 	},
 }
-// funcao relacionado ao deslizamento horizontal para criarTimestamp
-
-async function verificarDeslizamentoHorizontal(elemento){
-	await delay(0);
-  const distancia = 80;
-  let inicio = 0;
-
-  elemento.addEventListener("touchstart", (e) => {
-    inicio = e.touches[0].clientX;
-  });
-
-  elemento.addEventListener("touchend", (e) => {
-    const fim = e.changedTouches[0].clientX;
-    const diff = fim - inicio;
-
-    if (diff >= distancia) {
-      modoTimer.criarTimestamp();
-    }
-  });
-}
-verificarDeslizamentoHorizontal(moldura);
-
 function ativarOInput(index, placeholder){
   modoNotas.ultimoIndexSalvo = (typeof index === "number") ? index : modoNotas.ultimoIndexSalvo;
   if (document.querySelector(".inputNotas")){
@@ -787,29 +781,6 @@ async function renderizarNotas(item, index){
 
   if (modoNotas.listaNotas) modoNotas.atualizarMensagemVazio();
   efeitoFadeInNota(notaDiv);
-}
-// funcao para verificar o toque para editar notas.
-function verificarToque(el,id) {
-  let startTouchTime = 0;
-  let holdTimer;
-  el.addEventListener("touchstart", () => {
-    startTouchTime = performance.now();
-
-    holdTimer = setTimeout(() => {
-      el.classList.add("balançando");
-      navigator.vibrate(30);
-    }, 800);
-  });
-
-  el.addEventListener("touchend", () => {
-    const duration = performance.now() - startTouchTime;
-    clearTimeout(holdTimer);
-
-    if (duration > 500 && el.classList.contains("balançando")) {
-      el.classList.remove("balançando");
-      editarNota(el, id);
-    }
-  });
 }
 // funcao de editar a nota
 async function editarNota(el, id){
@@ -940,16 +911,41 @@ const overlay = {
 	},
 };
 
+
+
 // MUITO experimental, pode quebrar
+function verificarToque(el,id) {
+  let startTouchTime = 0;
+  let holdTimer;
+  el.addEventListener("touchstart", () => {
+    startTouchTime = performance.now();
+
+    holdTimer = setTimeout(() => {
+      el.classList.add("balançando");
+      navigator.vibrate(30);
+    }, 800);
+  });
+
+  el.addEventListener("touchend", () => {
+    const duration = performance.now() - startTouchTime;
+    clearTimeout(holdTimer);
+
+    if (duration > 500 && el.classList.contains("balançando")) {
+      el.classList.remove("balançando");
+      editarNota(el, id);
+    }
+  });
+}
+
 async function verificarDeslizamentoVertical(elemento){
 	const distancia = 50;
 	let inicio = 0;
 	await delay(0);
 	elemento.addEventListener("touchstart", (e) =>{
-
 		inicio = e.touches[0].clientY;
 	});
 	elemento.addEventListener("touchend", (e) => {
+		if(timerConfig.config === "stopwatch" || timerConfig.segundosRestantes > 0) return; // caso nao esteja no modo adequado, ou ainda haja segundos para acabar --->> retorna.
 		const fim = e.changedTouches[0].clientY;
 		const deslocamentoY = inicio - fim;
 		// para nao conflitar com o gesto de atualizar pagina no mobile, o gesto de encerrar o timer tem que ser para cima
@@ -960,3 +956,23 @@ async function verificarDeslizamentoVertical(elemento){
 	});
 }
 verificarDeslizamentoVertical(moldura);
+
+async function verificarDeslizamentoHorizontal(elemento){
+	await delay(0);
+  const distancia = 80;
+  let inicio = 0;
+
+  elemento.addEventListener("touchstart", (e) => {
+    inicio = e.touches[0].clientX;
+  });
+
+  elemento.addEventListener("touchend", (e) => {
+    const fim = e.changedTouches[0].clientX;
+    const diff = fim - inicio;
+
+    if (diff >= distancia) {
+      modoTimer.criarTimestamp();
+    }
+  });
+}
+verificarDeslizamentoHorizontal(moldura);
