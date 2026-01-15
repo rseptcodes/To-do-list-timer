@@ -181,7 +181,7 @@ const modoNotas = {
     this.listaNotas.className = "listaNotas";
     this.listaNotas.id = "listaNotas";
     document.getElementById("moldura").appendChild(this.listaNotas);
-    renderizarNotasSalvas();
+    createNotas.renderizarNotasSalvas();
     this.atualizarMensagemVazio();
 	},
 	async gerenciarOpacidadeNotasUI() {
@@ -192,7 +192,7 @@ const modoNotas = {
 
   for (const el of elementos) {
   	if (!el) continue;
-    await gerenciarAnimacao(el);
+    await helperFunctions.gerenciarAnimacao(el);
   	el?.classList.toggle("oculto");
   }
   if (this.mensagemVazio) {
@@ -300,9 +300,9 @@ hide(){
 async tipUI(){
 	//irei adicionar mais coisas aqui (como vibracao e uma animacao por exemplo,mas por enquanto é experimental
 	if (!this.primeiraVez) return;
-	await delay(1000)
+	await helperFunctions.delay(1000)
 	this.reveal();
-	await delay(2100);
+	await helperFunctions.delay(2100);
 	this.hide();
 	this.primeiraVez = false;
 	console.log("rodou");
@@ -333,7 +333,7 @@ const modoTimer = {
 
   for (const el of elementos) {
   	if (!el) continue;
-    await gerenciarAnimacao(el);
+    await helperFunctions.gerenciarAnimacao(el);
   	el?.classList.toggle("oculto");
   }
 },
@@ -344,10 +344,10 @@ const modoTimer = {
   	timestampInfo.className = "timestampInfo";
   	timestampInfo.innerText = "Deslize para a direita para criar um timestamp";
   	this.timestampDiv.appendChild(timestampInfo);
-  	await delay(3000);
+  	await helperFunctions.delay(3000);
   	timestampInfo.offsetHeight;
   	timestampInfo.classList.add( "timestampInfoFadeOut");
-  	await delay(1000);
+  	await helperFunctions.delay(1000);
   	timestampInfo?.remove();
   },
   // funcoes relacionados a marcação do tempo
@@ -368,7 +368,7 @@ async limparTimestamps() {
 for (let i = timestamps.length - 1; i >= 0; i--) {
   const tsChild = timestamps[i];
   tsChild.classList.add("desaparecer");
-  await delay(velocidade);
+  await helperFunctions.delay(velocidade);
   tsChild.remove();
 }
 },
@@ -563,7 +563,7 @@ const botaoTimer = {
 	existe: false,
 	async criarBotaoTimer(acao){
 	if (!modoTimer.botaoDiv){
-		await delay(0);
+		await helperFunctions.delay(0);
 	}
 	const botaoTimer = document.createElement("button");
 	botaoTimer.classList.add("botaoTimer", acao);
@@ -700,7 +700,7 @@ const inputNotas = {
 	input: null,
 	criar(placeholder){
 	if (this.input !== null) return;
-	this.input = createElement("textarea", document.getElementById("moldura"), "inputNotas");
+	this.input = helperFunctions.createElement("textarea", document.getElementById("moldura"), "inputNotas");
   if (!placeholder) {
   this.input.placeholder = "Nova nota";
   } else {
@@ -749,14 +749,15 @@ fechar(texto){
   	return;
   } 
   const index = modoNotas.ultimoIndexSalvo;
-  const nota = salvarTextoEmArray(texto, index);
-  renderizarNotas(nota, index);
+  const nota = createNotas.salvarTextoEmArray(texto, index);
+  createNotas.renderizarNotas(nota, index);
   modoNotas.ultimoIndexSalvo = null;
 },
 };
-//salva o texto em array e envia ao localstorage para renderizar
-function salvarTextoEmArray(texto, index){
-  const nota = { id: gerarId(), text: texto };
+// objeto com funcoes relacionadas a criacao de notas
+const createNotas = {
+salvarTextoEmArray(texto, index){
+  const nota = { id: this.gerarId(), text: texto };
   if (typeof index === "number" && index >= 0) {
     modoNotas.notasArray.splice(index, 0, nota);
   } else {
@@ -764,20 +765,17 @@ function salvarTextoEmArray(texto, index){
   }
   localStorage.setItem("notasArray", JSON.stringify(modoNotas.notasArray));
   return nota;
-}
-
-//gera id
-function gerarId(){
+},
+gerarId(){
   if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
   return Date.now().toString(36) + Math.random().toString(36).slice(2,8);
-}
-
+},
 // renderiza notas no dom
-async function renderizarNotas(item, index){
+async renderizarNotas(item, index){
   const isObj = typeof item === "object" && item !== null;
   const texto = isObj ? item.text : item;
   let id = isObj ? item.id : undefined;
-  if (!id) id = gerarId();
+  if (!id) id = this.gerarId();
 
   const notaDiv = document.createElement("div");
   notaDiv.classList.add("notaDiv");
@@ -787,10 +785,10 @@ async function renderizarNotas(item, index){
   notaFundo.innerText = texto;
   notaFundo.dataset.id = id;
 
-  const botaoLixeira = criarbotaoLixeira(notaDiv, id);
+  const botaoLixeira = this.criarbotaoLixeira(notaDiv, id);
   verificarToque(notaFundo, id);
   notaFundo.addEventListener("click", () => {
-    trocarClassebotaoLixeira(botaoLixeira);
+    this.trocarClassebotaoLixeira(botaoLixeira);
     notaFundo.classList.toggle("mini");
   });
   notaDiv.appendChild(notaFundo);
@@ -801,10 +799,10 @@ async function renderizarNotas(item, index){
   }
 
   if (modoNotas.listaNotas) modoNotas.atualizarMensagemVazio();
-  efeitoFadeInNota(notaDiv);
-}
+  this.efeitoFadeInNota(notaDiv);
+},
 // funcao de editar a nota
-async function editarNota(el, id){
+async editarNota(el, id){
   if (document.querySelector(".inputNotas")) return;
   const index = modoNotas.notasArray.findIndex(n => n.id === id);
   const textoPlaceholder = modoNotas.notasArray[index].text
@@ -813,26 +811,25 @@ async function editarNota(el, id){
   const notaPApagar = document.querySelector(`[data-id="${id}"]`);
   if (notaPApagar) {
     const notaDiv = notaPApagar.parentElement;
-    efeitoFadeOutNota(notaDiv);
-    await delay(200);
+    this.efeitoFadeOutNota(notaDiv);
+    await helperFunctions.delay(200);
   }
-  await apagarNotas(id);
+  await this.apagarNotas(id);
   inputNotas.ativar(index, textoPlaceholder);
   botaoFooter.focus();
-}
-
+},
 // efeitos
-async function efeitoFadeInNota(el){
+async efeitoFadeInNota(el){
 	el.classList.add("notaFadeIn");
-	await delay(100);
+	await helperFunctions.delay(100);
 	el.classList.remove("notaFadeIn");
-}
-async function efeitoFadeOutNota(el){
+},
+async efeitoFadeOutNota(el){
 	el.classList.add("notaFadeOut");
-}
+},
 
 // funcoes de gerenciamento da extincao de notas
-async function apagarNotas(id){
+async apagarNotas(id){
   const index = modoNotas.notasArray.findIndex(n => n.id === id);
   if (index !== -1) modoNotas.notasArray.splice(index, 1);
   localStorage.setItem("notasArray", JSON.stringify(modoNotas.notasArray));
@@ -843,59 +840,66 @@ async function apagarNotas(id){
     return;
   }
   const notaDivPApagar = notaPApagar.parentElement;
-  efeitoFadeOutNota(notaDivPApagar);
-  await delay(500);
+  this.efeitoFadeOutNota(notaDivPApagar);
+  await helperFunctions.delay(500);
   if (notaDivPApagar) notaDivPApagar.remove();
   if (modoNotas.listaNotas) modoNotas.atualizarMensagemVazio();
-}
-function criarbotaoLixeira(local, id){
+},
+criarbotaoLixeira(local, id){
 	const botaoLixeira = document.createElement("button");
 botaoLixeira.classList.add("botaoLixeira", "oculto");
 botaoLixeira.innerHTML = '<i class="fa-solid fa-trash"></i>';
 	local.appendChild(botaoLixeira);
 	botaoLixeira.addEventListener("click", (e) => {
 		e.stopPropagation();
-		apagarNotas(id);
+		this.apagarNotas(id);
 	});
 	return botaoLixeira;
-}
-async function trocarClassebotaoLixeira(item){
+},
+async trocarClassebotaoLixeira(item){
 	item.classList.toggle("oculto");
-}
+},
 
 // renderiza as notas salvas no localStorage
-function renderizarNotasSalvas(){
+renderizarNotasSalvas(){
   modoNotas.notasArray = JSON.parse(localStorage.getItem("notasArray") || "[]");
   modoNotas.notasArray.forEach((item, index) => {
-    renderizarNotas(item, index);
+    this.renderizarNotas(item, index);
   });
-}
-
+},
+};
 // funcoes relacionadas à animacao em geral
-function delay(ms){
+const helperFunctions = {
+delay(ms){
 	return new Promise(resolve =>
 	setTimeout(resolve, ms));
-}
-async function animarEntrada(el){
+},
+async animarEntrada(el){
 	el.classList.add("aparecer");
-	await delay(700);
+	await this.delay(700);
 	el.classList.remove("aparecer");
-}
-async function animarSaida(el){
+},
+async animarSaida(el){
 	el.classList.add("desaparecer");
-	await delay(700);
+	await this.delay(700);
 	el.classList.remove("desaparecer");
-}
-function gerenciarAnimacao(el){
+},
+async gerenciarAnimacao(el){
 	// isso é meio gambiarra, mas futuramenre pretendo melhorar isso aqui.
 	if (el === modoNotas.mensagemVazio) return
   if(el?.classList.contains("oculto")) {
-    animarEntrada(el);
+    this.animarEntrada(el);
   } else {
-    animarSaida(el);
+    this.animarSaida(el);
   }
-}
-
+},
+createElement(tipo, local, classe){
+	const nome = document.createElement(tipo);
+	nome.classList.add(classe)
+  local.appendChild(nome);
+  return nome;
+},
+};
 // experimental, reorganizar efeitos depois
 const overlay = {
 	element: null,
@@ -953,7 +957,7 @@ function verificarToque(el,id) {
 
     if (duration > 500 && el.classList.contains("balançando")) {
       el.classList.remove("balançando");
-      editarNota(el, id);
+      createNotas.editarNota(el, id);
     }
   });
 }
@@ -961,7 +965,7 @@ function verificarToque(el,id) {
 async function verificarDeslizamentoVertical(elemento){
 	const distancia = 50;
 	let inicio = 0;
-	await delay(0);
+	await helperFunctions.delay(0);
 	elemento.addEventListener("touchstart", (e) =>{
 		inicio = e.touches[0].clientY;
 	});
@@ -979,7 +983,7 @@ async function verificarDeslizamentoVertical(elemento){
 verificarDeslizamentoVertical(moldura);
 
 async function verificarDeslizamentoHorizontal(elemento){
-	await delay(0);
+	await helperFunctions.delay(0);
   const distancia = 80;
   let inicio = 0;
 
@@ -997,11 +1001,3 @@ async function verificarDeslizamentoHorizontal(elemento){
   });
 }
 verificarDeslizamentoHorizontal(moldura);
-
-// substituir depois para otimizar o codigo
-function createElement(tipo, local, classe){
-	const nome = document.createElement(tipo);
-	nome.classList.add(classe)
-  local.appendChild(nome);
-  return nome;
-	  }
