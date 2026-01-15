@@ -43,7 +43,7 @@ modosSwitch.botaoTrocar.addEventListener("click", async () => {
       modosSwitch.mudarTitulo("Timer");
       modosSwitch.modoAtual = "modoTimer";
       modosSwitch.atualizarModoAtual(modosSwitch.modoAtual);
-      if (document.body.querySelector(".inputNotas")) fecharOInput();
+      if (document.body.querySelector(".inputNotas")) inputNotas.fechar();
       if (botaoFooter.botaoFooter)botaoFooter.update();
       visorUI.tipUI();
       if (nowBar.element){
@@ -128,7 +128,7 @@ const botaoFooter = {
 	acao(){
 		if(this.botaoFooter === null) this.criar();
 		if (modosSwitch.modoAtual === "modoNotas"){
-			ativarOInput();
+			inputNotas.ativar();
 			if(this.emFocus && (!overlay.element || !overlay.element.classList.contains("overlay--hidden"))){
 				overlay.hide();
 			} else {
@@ -649,7 +649,7 @@ const editTimerValue = {
 		input.className = "inputEditValue";
 		input.maxLength = "2";
 		input.addEventListener("click",() => {
-			focusInput(input)
+			this.focus(input)
 		});
 		if (document.querySelectorAll(".inputEditValue").length === 0) input.placeholder = "MM"; else input.placeholder = "SS";
 		this.editMenu.appendChild(input);
@@ -666,6 +666,19 @@ const editTimerValue = {
 })
 return input;
 	},
+	focus(input){
+  input.focus();
+  // se for mobile deixa o input visivel
+  const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+  if (!isMobile) return;
+  
+  setTimeout(() => {
+    input.scrollIntoView({ 
+      behavior: 'smooth', 
+      block: 'center' 
+    });
+  }, 300);
+},
 	async transformarValorInput(){
 		const minutos = this.minInput.value !== "" ? this.minInput.value : "1";
    const segundos = this.secInput.value !== "" ? this.secInput.value : "00";
@@ -682,30 +695,36 @@ return input;
 		this.secInput = null;
 		this.minInput = null;
 	},
-}
-function ativarOInput(index, placeholder){
-  modoNotas.ultimoIndexSalvo = (typeof index === "number") ? index : modoNotas.ultimoIndexSalvo;
-  if (document.querySelector(".inputNotas")){
-    let textoInput = document.querySelector(".inputNotas").value.trim();
+};
+const inputNotas = {
+	input: null,
+	criar(placeholder){
+	if (this.input !== null) return;
+	this.input = createElement("textarea", document.getElementById("moldura"), "inputNotas");
+  if (!placeholder) {
+  this.input.placeholder = "Nova nota";
+  } else {
+  this.input.value = placeholder;
+  this.input.placeholder = placeholder;
+  }
+},
+	ativar(index, placeholder){
+		if (this.input !== null){
+    let textoInput = this.input.value.trim();
     if (textoInput === ""){
       textoInput = "Nova nota";
-    } 
-    fecharOInput(textoInput);
+    }
+    modoNotas.ultimoIndexSalvo = (typeof index === "number") ? index : modoNotas.ultimoIndexSalvo;
+    this.fechar(textoInput);
     return;
-  }
-
-  const inputNotas = document.createElement("textarea");
-  if (!placeholder) {
-  	inputNotas.placeholder = "Nova nota";
-  } else {
-  	inputNotas.value = placeholder;
-  	inputNotas.placeholder = placeholder;
-  }
-  inputNotas.classList.add("inputNotas");
-  document.getElementById("moldura").appendChild(inputNotas);
-  focusInput(inputNotas);
-}
-function focusInput(input){
+	}
+		if (this.input === null) {
+			this.criar(placeholder);
+   		this.focus(this.input);
+   		console.log("criou e focou")
+		}
+},
+focus(input){
   input.focus();
   // se for mobile deixa o input visivel
   const isMobile = /Mobi|Android/i.test(navigator.userAgent);
@@ -717,11 +736,12 @@ function focusInput(input){
       block: 'center' 
     });
   }, 300);
-}
+},
 // fecha o input e guarda o texto
-function fecharOInput(texto){
-  if (document.querySelector(".inputNotas")){
-    document.querySelectorAll(".inputNotas").forEach(el => el.remove());
+fechar(texto){
+  if (this.input !== null){
+    this.input.remove();
+    this.input = null;
   }
   console.log(texto)
   if (!texto){
@@ -732,7 +752,8 @@ function fecharOInput(texto){
   const nota = salvarTextoEmArray(texto, index);
   renderizarNotas(nota, index);
   modoNotas.ultimoIndexSalvo = null;
-}
+},
+};
 //salva o texto em array e envia ao localstorage para renderizar
 function salvarTextoEmArray(texto, index){
   const nota = { id: gerarId(), text: texto };
@@ -796,7 +817,7 @@ async function editarNota(el, id){
     await delay(200);
   }
   await apagarNotas(id);
-  ativarOInput(index, textoPlaceholder);
+  inputNotas.ativar(index, textoPlaceholder);
   botaoFooter.focus();
 }
 
@@ -886,7 +907,7 @@ const overlay = {
   	this.element.addEventListener("click", () => {
   		if(this.element?.classList.contains("overlay--timer")) return;
   if (document.querySelector(".inputNotas")) {
-    fecharOInput();
+    inputNotas.fechar();
   }
   if (document.querySelector(".inputEditValue")) {
     editTimerValue.deletarEditUI();
@@ -976,3 +997,11 @@ async function verificarDeslizamentoHorizontal(elemento){
   });
 }
 verificarDeslizamentoHorizontal(moldura);
+
+// substituir depois para otimizar o codigo
+function createElement(tipo, local, classe){
+	const nome = document.createElement(tipo);
+	nome.classList.add(classe)
+  local.appendChild(nome);
+  return nome;
+	  }
