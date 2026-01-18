@@ -786,7 +786,7 @@ async renderizarNotas(item, index){
   notaFundo.dataset.id = id;
 
   const botaoLixeira = this.criarbotaoLixeira(notaDiv, id);
-  verificarToque(notaFundo, id);
+  setGestures.verificarToque(notaFundo, id);
   notaFundo.addEventListener("click", () => {
     this.trocarClassebotaoLixeira(botaoLixeira);
     notaFundo.classList.toggle("mini");
@@ -936,15 +936,49 @@ const overlay = {
 	},
 };
 
-
-
 // MUITO experimental, pode quebrar
-function verificarToque(el,id) {
+
+const setGestures = {
+	verificarDeslizamento(elemento, callback){
+		const distancia = 100;
+		let inicioX = 0;
+		let inicioY = 0;
+		elemento.addEventListener("touchstart", (e) => {
+			inicioX = e.touches[0].clientX;
+			inicioY = e.touches[0].clientY;
+		});
+		elemento.addEventListener("touchend", (e) => {
+		const fimX = e.changedTouches[0].clientX;
+		const fimY = e.changedTouches[0].clientY;
+		const diffX = inicioX - fimX;
+		const diffY = inicioY - fimY;
+		if (Math.abs(diffX) > Math.abs(diffY)){
+			if (Math.abs(diffX) > distancia) {
+			const direcao = diffX > 0 ? "left" : "right";
+			callback(direcao, Math.abs(diffX));
+			}
+		} else {
+			if (Math.abs(diffY) > distancia) {
+				const direcao = diffY > 0 ? "up" : "down";
+			callback(direcao, Math.abs(diffY));
+			}
+		}
+		});
+	},
+	onSwipe(direcao, diff){
+		//criarTimestamp
+		if(direcao === "right" && timerConfig.rodando && timerConfig.config === "stopwatch") {
+			modoTimer.criarTimestamp();
+			} else if (direcao === "up" && timerConfig.segundosRestantes < 0)	{
+				timerConfig.timerEnd();
+			}
+	},
+	verificarToque(el,id) {
   let startTouchTime = 0;
   let holdTimer;
   el.addEventListener("touchstart", () => {
     startTouchTime = performance.now();
-
+    
     holdTimer = setTimeout(() => {
       el.classList.add("balançando");
       navigator.vibrate(30);
@@ -961,43 +995,5 @@ function verificarToque(el,id) {
     }
   });
 }
-
-async function verificarDeslizamentoVertical(elemento){
-	const distancia = 50;
-	let inicio = 0;
-	await helperFunctions.delay(0);
-	elemento.addEventListener("touchstart", (e) =>{
-		inicio = e.touches[0].clientY;
-	});
-	elemento.addEventListener("touchend", (e) => {
-		if(timerConfig.config === "stopwatch" || timerConfig.segundosRestantes > 0) return; // caso nao esteja no modo adequado, ou ainda haja segundos para acabar --->> retorna.
-		const fim = e.changedTouches[0].clientY;
-		const deslocamentoY = inicio - fim;
-		// para nao conflitar com o gesto de atualizar pagina no mobile, o gesto de encerrar o timer tem que ser para cima
-		if (deslocamentoY > distancia){
-			timerConfig.timerEnd();
-			console.log("toque")
-		};
-	});
-}
-verificarDeslizamentoVertical(moldura);
-
-async function verificarDeslizamentoHorizontal(elemento){
-	await helperFunctions.delay(0);
-  const distancia = 80;
-  let inicio = 0;
-
-  elemento.addEventListener("touchstart", (e) => {
-    inicio = e.touches[0].clientX;
-  });
-
-  elemento.addEventListener("touchend", (e) => {
-    const fim = e.changedTouches[0].clientX;
-    const diff = fim - inicio;
-
-    if (diff >= distancia) {
-      modoTimer.criarTimestamp();
-    }
-  });
-}
-verificarDeslizamentoHorizontal(moldura);
+};
+setGestures.verificarDeslizamento(moldura, setGestures.onSwipe);
