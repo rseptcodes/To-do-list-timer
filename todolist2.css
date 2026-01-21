@@ -29,8 +29,6 @@
 		--shake-borderColor: 2px solid #161e28;
 		--borderBottonColor: #0e1111;
 }
-
-
 body {
 	box-sizing: border-box;
 	margin: 0;
@@ -490,19 +488,15 @@ body {
   }
 }
 @keyframes VTFocusAnimation {
-	0% {
-		transform: scale(1);
-		opacity: 0.8;
-	}
-	50% {
-		transform: scale(1.1);
-		opacity: 1;
-	}
-	100% {
-		transform: scale(1);
-	opacity: 0.8;	
-	}
+  0%, 100% {
+  	box-shadow: var(--shadow-medium);
+  }
+  50% {
+    box-shadow: 0 0 20px var(--red-buttoncolor);
+  }
 }
+
+
 .botaoTimer.minimizado.iniciar.piscando {
   animation: piscar-sutil 1.3s ease-in-out infinite;
   will-change: background-color, box-shadow, transform;
@@ -849,4 +843,86 @@ body {
     opacity: 0.6;
     z-index: 11;
   }
-	}
+}
+.timerFinishedScreen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  position: fixed;
+  z-index: 11;
+  opacity: 0.8;
+  top: 0;
+  gap: 5dvw;
+  height: 100dvh;
+  width: 100dvw;
+  background: linear-gradient(to bottom, #000000, #181818, #000000);
+  background-size: 100% 200%;
+  animation: gradientDescend 3s linear infinite alternate;
+}
+
+@keyframes gradientDescend {
+  0% {
+    background-position: 0% 0%;
+    opacity: 0.8;
+  }
+  100% {
+    background-position: 0% 100%;
+    opacity: 1;
+  }
+}
+
+.timerFinishedScreen--hidden{
+	opacity: 0;
+	pointer-events: none;
+	animation: none;
+}
+.screenTip{
+  color: white;
+  z-index: 7;
+}
+.screenArrow {
+  position: relative;
+  width: 0;
+  z-index: 7;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 15px solid white;
+  filter: drop-shadow(0 0 2px rgba(0,0,0,0.2));
+  animation: arrowUp 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.screenArrow::after {
+  content: "";
+  position: absolute;
+  left: -10px;
+  top: 20px; 
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 15px solid white;
+  opacity: 0.6;
+  animation: arrowUp 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  animation-delay: 0.15s; 
+}
+
+@keyframes arrowUp {
+  0% {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  20% {
+    transform: translateY(-40%);
+    opacity: 1;
+  }
+  45% {
+    transform: translateY(-20%);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-150%);
+    opacity: 0;
+  }
+}
