@@ -137,7 +137,7 @@ const botaoFooter = {
 			}
 			this.focus();
 		} else if (modosSwitch.modoAtual === "modoTimer" && !timerConfig.rodando){
-			if(!overlay.element || !overlay.element.classList.contains("overlay--hidden")) overlay.hide(); else overlay.show(true);
+			if(!overlay.element || !overlay.element.classList.contains("overlay--hidden")) overlay.hide(); else overlay.show();
 			editTimerValue.criarEditUI();
 			if (this.emFocus){
 				editTimerValue.transformarValorInput();
@@ -419,13 +419,13 @@ const timerConfig = {
   },
   verificarTimerEnd(){
   if (this.segundosRestantes <= 0){
-  	if(!overlay.element || overlay.element.classList.contains("overlay--hidden")) overlay.show(false);
+    timerFinishedScreen.show();
   	visorUI.visorUIFocusON();
   	navigator.vibrate(100);
   }
   },
   timerEnd(){
-  	overlay.hide();
+  	timerFinishedScreen.hide();
   	visorUI.visorUIFocusOFF();
   	this.reset();
     botaoTimer.atualizar("resetado");
@@ -484,6 +484,25 @@ const timerConfig = {
 	}
 	},
 }
+// tela de timer
+const timerFinishedScreen = {
+	element: null,
+	criar(){
+	 if(this.element !== null) return;
+	 this.element = helperFunctions.createElement("div",document.getElementById("moldura"),"timerFinishedScreen");
+	 const screenArrow = helperFunctions.createElement("div", this.element, "screenArrow");
+	 const screenTip = helperFunctions.createElement("p", this.element, "screenTip");
+	 screenTip.innerText = "deslize para cima para encerrar";
+	},
+	show(){
+		if(this.element === null) this.criar();
+		this.element.classList.remove("timerFinishedScreen--hidden");
+	},
+	hide(){
+	 	if(this.element === null) this.criar();
+		this.element.classList.add("timerFinishedScreen--hidden");
+	},
+};
 //funcoes relacionadas á nowBar
 const nowBar = {
   	element: null,
@@ -921,13 +940,8 @@ const overlay = {
 });
   	this.hide();
   },
-  show(podeTocar){
+  show(){
   	if(this.element === null) this.criar();
-  	if(!podeTocar){
-  		this.element.classList.add("overlay--timer");
-  		} else {
-  			this.element.classList.remove("overlay--timer");
-  		}
 		this.element.classList.remove("overlay--hidden");
   },
 	async hide(){
