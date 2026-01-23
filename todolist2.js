@@ -1,65 +1,114 @@
 // Objeto relacionado à troca de modos
-const modosSwitch = {
+appConfig = {
+	moldura: null,
+	temaAtual: null,
+	init(){
+		this.moldura = document.getElementById("moldura");
+		header.criar();
+		modos.init();
+		temas.init();
+		setGestures.verificarDeslizamento(appConfig.moldura, setGestures.onSwipe);
+		tutorialManager.init();
+		botaoFooter.criar();
+    botaoFooter.update();
+    overlay.criar();
+	},
+};
+const modos = {
+	modoAtual: null,
+	init(){
+	this.modoAtual = localStorage.getItem("modoAtual");
+  console.log(this.modoAtual);
+  if(this.modoAtual === null) this.modoAtual = "Notas";
+  this.iniciar(this.modoAtual);
+	},
+	update(modoAtual){
+		if (modoAtual !== "Notas" && modoAtual !== "Timer") return;
+		this.modoAtual = modoAtual;
+  	localStorage.setItem("modoAtual", modoAtual);
+	},
+	async modoSwitch(){
+		await modoNotas.gerenciarOpacidadeNotasUI();
+  	await modoTimer.gerenciarOpacidadeTimerUI();
+  	let modoAtual;
+  	if(modoNotas.listaNotas.classList.contains("oculto")) {
+  		modoAtual = "Timer";
+      header.mudarTitulo(modoAtual);
+      inputNotas.fechar();
+      visorUI.tipUI();
+      nowBar.esconder();
+	} else {
+		modoAtual = "Notas";
+		header.mudarTitulo(modoAtual);
+      if (timerConfig.rodando && modoAtual !== "Timer") nowBar.mostrarNoCentro();
+	}
+	this.update(modoAtual);
+	botaoFooter.update();
+	},
+	iniciar(modoAtual){
+  	this.modoAtual = modoAtual;
+  	if (modoNotas.listaNotas === null) modoNotas.criarUINotas();
+  	if (visorUI.visorP === null) modoTimer.criarUITimer();
+  	if(this.modoAtual === "Notas"){
+  		modoTimer.gerenciarOpacidadeTimerUI();
+  		header.mudarTitulo("Notas");
+  	} else if (this.modoAtual === "Timer") {
+  		modoNotas.gerenciarOpacidadeNotasUI();
+  		header.mudarTitulo("Timer");
+  	}
+  }
+};
+const temas = {
+	temaAtual: null,
+  init(){
+	this.temaAtual = localStorage.getItem("tema");
+	if (this.temaAtual === "dark"){
+		document.body.setAttribute("data-theme", "dark");
+	} else {
+		document.body.removeAttribute("data-theme");
+	}
+	header.atualizarBotaoTema(this.temaAtual);
+	},
+	temasSwicth(){
+		if (this.temaAtual === "dark"){
+  	document.body.removeAttribute("data-theme");
+  	this.temaAtual = "white";
+  } else {
+  	document.body.setAttribute("data-theme", "dark");
+  	this.temaAtual = "dark";
+  }
+  localStorage.setItem("tema", this.temaAtual);
+  header.atualizarBotaoTema(this.temaAtual);
+  },
+};
+const header = {
   botaoTrocar: null,
   botaoTema: null,
   titulo: null,
   header: null,
   modoAtual: null,
   temaAtual: "white",
-  atualizarModoAtual(modoAtual){
-  	localStorage.setItem("modoAtual", modoAtual);
-  },
-  carregarModoAtual(){
-  this.modoAtual = localStorage.getItem("modoAtual");
-  console.log(this.modoAtual);
-  if(this.modoAtual === null) this.modoAtual = "modoNotas";
-  },
   // cria o header
-  criarHeader() {
-  	this.header = document.createElement("div");
-  	this.header.className = "header";
-  	document.getElementById("moldura").appendChild(this.header);
-    this.titulo = document.createElement("h1");
-    this.titulo.className = "titulo";
+  criar() {
+  	if (this.header !== null) return;
+  	this.header = helperFunctions.createElement("div", appConfig.moldura, "header");
+  	
+    this.titulo = helperFunctions.createElement("h1", this.header, "titulo");
     this.titulo.id = "titulo";
-    this.header.appendChild(this.titulo);
-    this.botaoTrocar = document.createElement("button");
-    this.botaoTrocar.classList.add("botaoTrocar");
+    
+    this.botaoTrocar = helperFunctions.createElement("button", this.header, "headerButton");
     this.botaoTrocar.innerHTML = `<i class="fa-solid fa-clock"></i>`;
-    this.header.appendChild(this.botaoTrocar);
-    botaoFooter.criar();
-    botaoFooter.update();
-    overlay.criar();
-    this.botaoTema = document.createElement("button");
-    this.botaoTema.className = "botaoTrocar";
-    this.header.appendChild(this.botaoTema);
+    
+    this.botaoTema = helperFunctions.createElement("button",this.header, "headerButton");
     this.botaoTema.innerHTML = `<i class="fa-solid fa-moon"></i>`;
     
   // botao para trocar os modos
-modosSwitch.botaoTrocar.addEventListener("click", async () => {
-	await modoNotas.gerenciarOpacidadeNotasUI();
-	await modoTimer.gerenciarOpacidadeTimerUI();
-	if(modoNotas.listaNotas.classList.contains("oculto")) {
-      modosSwitch.mudarTitulo("Timer");
-      modosSwitch.modoAtual = "modoTimer";
-      modosSwitch.atualizarModoAtual(modosSwitch.modoAtual);
-      if (document.body.querySelector(".inputNotas")) inputNotas.fechar();
-      if (botaoFooter.botaoFooter)botaoFooter.update();
-      visorUI.tipUI();
-      if (nowBar.element){
-      	nowBar.esconder();
-      }
-    } else {
-      modosSwitch.mudarTitulo("Notas");
-      modosSwitch.modoAtual = "modoNotas";
-      modosSwitch.atualizarModoAtual(modosSwitch.modoAtual);
-      if (botaoFooter.botaoFooter)botaoFooter.update();
-      if (timerConfig.rodando && modosSwitch !== modoTimer) nowBar.mostrarNoCentro();
-    }
+this.botaoTrocar.addEventListener("click", async () => {
+  modos.modoSwitch();
 });
   // funcao para indentificar o tema atual e salvar em localStorage
-modosSwitch.botaoTema.addEventListener("click", () => {
-	modosSwitch.trocarTema();
+this.botaoTema.addEventListener("click", () => {
+	temas.temasSwicth();
 });
   },
 atualizarBotaoTema(temaAtual){
@@ -69,56 +118,20 @@ atualizarBotaoTema(temaAtual){
 		this.botaoTema.innerHTML = `<i class="fa-solid fa-moon"></i>`;
 	}
 },
-  trocarTema(){
-  if (this.temaAtual === "dark"){
-  	document.body.removeAttribute("data-theme");
-  	this.temaAtual = "white";
-  } else {
-  	document.body.setAttribute("data-theme", "dark");
-  	this.temaAtual = "dark";
-  }
-  localStorage.setItem("tema", this.temaAtual);
-  modosSwitch.atualizarBotaoTema(this.temaAtual);
-  },
-carregarTema(){
-	this.temaAtual = localStorage.getItem("tema");
-	if (this.temaAtual === "dark"){
-		document.body.setAttribute("data-theme", "dark");
-	} else {
-		document.body.removeAttribute("data-theme");
-	}
-	modosSwitch.atualizarBotaoTema(this.temaAtual);
-	},
   // função que muda o titulo
   mudarTitulo(texto){
     if (this.titulo) this.titulo.innerText = texto;
   },
-  // inicia o modo
-  iniciarModo(modoAtual){
-  	this.modoAtual = modoAtual;
-  	if (modoNotas.listaNotas === null) modoNotas.criarUINotas();
-  	if (visorUI.visorP === null) modoTimer.criarUITimer();
-  	if(this.modoAtual === "modoNotas"){
-  		modoTimer.gerenciarOpacidadeTimerUI();
-  		modosSwitch.mudarTitulo("Notas");
-  		
-  	} else if (this.modoAtual === "modoTimer") {
-  		modoNotas.gerenciarOpacidadeNotasUI();
-  		modosSwitch.mudarTitulo("Timer");
-  	}
-  	modosSwitch.carregarTema();
-  }
 };
+
 // objeto do modo de notas
 const botaoFooter = {
 	botaoFooter: null,
 	emFocus: false,
 	criar(){
-		this.botaoFooter = document.createElement("button");
-	this.botaoFooter.classList.add( "footerButton");
-    //this.botaoFooter.id = "botaoDeCriacao";
+		if(this.botaoFooter !== null) return;
+		this.botaoFooter = helperFunctions.createElement("button", appConfig.moldura, "footerButton");
     this.botaoFooter.innerHTML = '<i class="fa-solid fa-pen"></i>';
-    document.getElementById("moldura").appendChild(this.botaoFooter);
     if(this.botaoFooter){
     	this.botaoFooter.addEventListener("click", () => {
     		this.acao();
@@ -127,7 +140,7 @@ const botaoFooter = {
 	},
 	acao(){
 		if(this.botaoFooter === null) this.criar();
-		if (modosSwitch.modoAtual === "modoNotas"){
+		if (modos.modoAtual === "Notas"){
 			inputNotas.ativar();
 			if(this.emFocus && (!overlay.element || !overlay.element.classList.contains("overlay--hidden"))){
 				overlay.hide();
@@ -136,7 +149,7 @@ const botaoFooter = {
 				// ao editar nota, ele nao faz o hide porque nao é derivado da acao do usuario, comportamento plausivel com a funcao, mas errado, irei consertar dps
 			}
 			this.focus();
-		} else if (modosSwitch.modoAtual === "modoTimer" && !timerConfig.rodando){
+		} else if (modos.modoAtual === "Timer" && !timerConfig.rodando){
 			if(!overlay.element || !overlay.element.classList.contains("overlay--hidden")) overlay.hide(); else overlay.show();
 			editTimerValue.criarEditUI();
 			if (this.emFocus){
@@ -156,7 +169,7 @@ const botaoFooter = {
 		}
 	},
 	update(){
-		if(modosSwitch.modoAtual === "modoNotas"){
+		if(modos.modoAtual === "Notas"){
 			this.reveal();
 			return;
 		}
@@ -177,10 +190,8 @@ const botaoFooter = {
 };
 const modoNotas = {
 	criarUINotas(){
-    this.listaNotas = document.createElement("div");
-    this.listaNotas.className = "listaNotas";
+		this.listaNotas = helperFunctions.createElement("div", appConfig.moldura, "listaNotas");
     this.listaNotas.id = "listaNotas";
-    document.getElementById("moldura").appendChild(this.listaNotas);
     createNotas.renderizarNotasSalvas();
     this.atualizarMensagemVazio();
 	},
@@ -222,9 +233,7 @@ const modoNotas = {
 };
 // cria o header e inicia o modo quando a pagina carregar
 window.addEventListener("DOMContentLoaded", () => {
-	modosSwitch.carregarModoAtual();
-	modosSwitch.criarHeader();
-  modosSwitch.iniciarModo(modosSwitch.modoAtual);
+	appConfig.init();
 });
 // objeto do visor
 const visorUI = {
@@ -237,12 +246,10 @@ const visorUI = {
   // pode ser hidden ou reveal.
   criar(){
       if (this.VisorUI !== null) return;
-      this.VisorUI = document.createElement("div");
-      this.VisorUI.classList.add("visorTimer");
-      moldura.appendChild(this.VisorUI);
-      this.visorP = document.createElement("p");
-      this.visorP.className = "visorP";
-      this.VisorUI.appendChild(this.visorP);
+     this.VisorUI = helperFunctions.createElement("div", appConfig.moldura, "visorTimer");
+     
+      this.visorP = helperFunctions.createElement("p", this.VisorUI, "visorP");
+      
       timerConfig.mostrar("visorP");
        this.gerenciarSwitchModoTimer();
        if(!botaoTimer.existe)botaoTimer.init();
@@ -316,12 +323,9 @@ const modoTimer = {
   timestampDiv: null,
   criarUITimer() {
   	visorUI.criar();
-      this.botaoDiv = document.createElement("div");
-      this.botaoDiv.className = "botaoDiv";
-      moldura.appendChild(this.botaoDiv);
-      this.timestampDiv = document.createElement("div");
-      this.timestampDiv.className = "timestampDiv";
-      moldura.appendChild(this.timestampDiv);
+      this.botaoDiv = helperFunctions.createElement("div", appConfig.moldura, "botaoDiv");
+      
+      this.timestampDiv = helperFunctions.createElement("div", appConfig.moldura, "timestampDiv");
   },
   async gerenciarOpacidadeTimerUI() {
   const elementos = [
@@ -337,19 +341,6 @@ const modoTimer = {
   	el?.classList.toggle("oculto");
   }
 },
-  // indica a funcao de criarTimestamp
-  async timestampInfo(){
-  	if (document.body.querySelector(".timestampInfo")) return;
-  	const timestampInfo = document.createElement("p");
-  	timestampInfo.className = "timestampInfo";
-  	timestampInfo.innerText = "Deslize para a direita para criar um timestamp";
-  	this.timestampDiv.appendChild(timestampInfo);
-  	await helperFunctions.delay(3000);
-  	timestampInfo.offsetHeight;
-  	timestampInfo.classList.add( "timestampInfoFadeOut");
-  	await helperFunctions.delay(1000);
-  	timestampInfo?.remove();
-  },
   // funcoes relacionados a marcação do tempo
 criarTimestamp(){
 	if (!timerConfig.rodando || timerConfig.config === "timer") return;
@@ -395,9 +386,6 @@ const timerConfig = {
   this.inicioDoTimer = performance.now() - (this.segundos_pausados * 1000);
   this.rodando = true;
   if (visorUI.visorUIState === "reveal") visorUI.hide();
-  if (this.segundos_pausados === 0 && this.config !== "timer"){
-		modoTimer.timestampInfo();
-  }
   this.timerInterval = setInterval(() => {
 	this.agora = performance.now();
 	this.segundos = (this.agora - this.inicioDoTimer) / 1000;
@@ -489,7 +477,7 @@ const timerFinishedScreen = {
 	element: null,
 	criar(){
 	 if(this.element !== null) return;
-	 this.element = helperFunctions.createElement("div",document.getElementById("moldura"),"timerFinishedScreen");
+	 this.element = helperFunctions.createElement("div", appConfig.moldura,"timerFinishedScreen");
 	 const screenArrow = helperFunctions.createElement("div", this.element, "screenArrow");
 	 const screenTip = helperFunctions.createElement("p", this.element, "screenTip");
 	 screenTip.innerText = "deslize para cima para encerrar";
@@ -515,7 +503,7 @@ const nowBar = {
   		if (this.element) return;
   		this.element = document.createElement("div");
      	this.element.className = "nowBar";
-	modosSwitch.header.appendChild(this.element);
+	header.header.appendChild(this.element);
   	},
   	mostrarNoCentro(){
   		if(!this.primeiraVez){
@@ -590,6 +578,7 @@ const botaoTimer = {
 	botaoTimer.innerText = acao;
 	botaoTimer.addEventListener("click",() => {
   this.definirFuncoes(botaoTimer, acao);
+  tutorialManager.timestampTutorial();
   navigator.vibrate(2);
 	});
 	this.atualizar("resetado");
@@ -658,7 +647,7 @@ const editTimerValue = {
 		if(this.editMenu !== null || this.minInput !== null || this.secInput !== null) return;
 		this.editMenu = document.createElement("div");
 		this.editMenu.className = "editMenu";
-		moldura.appendChild(this.editMenu);
+		appConfig.moldura.appendChild(this.editMenu);
 		this.minInput = this.criarInput(this.minInput);
 		this.secInput = this.criarInput(this.secInput);
 	},
@@ -719,7 +708,7 @@ const inputNotas = {
 	input: null,
 	criar(placeholder){
 	if (this.input !== null) return;
-	this.input = helperFunctions.createElement("textarea", document.getElementById("moldura"), "inputNotas");
+	this.input = helperFunctions.createElement("textarea",appConfig.moldura, "inputNotas");
   if (!placeholder) {
   this.input.placeholder = "Nova nota";
   } else {
@@ -744,6 +733,7 @@ const inputNotas = {
 		}
 },
 focus(input){
+	if (this.input === null) return;
   input.focus();
   // se for mobile deixa o input visivel
   const isMobile = /Mobi|Android/i.test(navigator.userAgent);
@@ -758,6 +748,7 @@ focus(input){
 },
 // fecha o input e guarda o texto
 fechar(texto){
+	if (this.input === null) return;
   if (this.input !== null){
     this.input.remove();
     this.input = null;
@@ -918,6 +909,15 @@ createElement(tipo, local, classe){
   local.appendChild(nome);
   return nome;
 },
+async createMsg(texto, duracao){
+	const mensagem = this.createElement("p",appConfig.moldura, "mensagem");
+	mensagem.innerText = texto;
+	if (!(duracao >= 0)) duracao = 3000;
+  await this.delay(duracao);
+	this.animarSaida(mensagem);
+	await this.delay(700);
+  mensagem.remove();
+},
 };
 // experimental, reorganizar efeitos depois
 const overlay = {
@@ -926,7 +926,7 @@ const overlay = {
   	if(this.element !== null) return;
   	this.element = document.createElement("div");
   	this.element.className = "overlay";
-  	moldura.appendChild(this.element);
+  	appConfig.moldura.appendChild(this.element);
   	this.element.addEventListener("click", () => {
   		if(this.element?.classList.contains("overlay--timer")) return;
   if (document.querySelector(".inputNotas")) {
@@ -1010,4 +1010,47 @@ const setGestures = {
   });
 }
 };
-setGestures.verificarDeslizamento(moldura, setGestures.onSwipe);
+
+const tutorialManager = {
+	tutoriais: {
+		 //pode ser inProgress ou completed
+		createTimestamp: "inProgress",
+		toDoList: "inProgress",
+		editTimerValue: "inProgress",
+	},
+	init(){
+	  this.getTutorialStatus();
+	  this.toDoListTutorial();
+	},
+	getTutorialStatus(){
+    const salvo = localStorage.getItem("tutoriais");
+    if (salvo) {
+        this.tutoriais = JSON.parse(salvo);
+    }
+    console.log(this.tutoriais);
+},
+	tutorialUpdate(){
+		localStorage.setItem("tutoriais", JSON.stringify(this.tutoriais));
+	},
+	timestampTutorial(){
+		this.getTutorialStatus();
+		if(this.tutoriais.createTimestamp === "completed") return;
+		helperFunctions.createMsg("Deslize para direita para criar um timestamp", 3000);
+		this.tutoriais.createTimestamp = "completed";
+		this.tutorialUpdate();
+	},
+	toDoListTutorial(){
+		if(this.tutoriais.toDoList === "completed") return;
+		const texto = "Clique no botão com icone de lapis para criar | Toque e segure em uma nota para editar";
+		const nota = createNotas.salvarTextoEmArray(texto);
+    createNotas.renderizarNotas(nota);
+    this.tutoriais.toDoList = "completed";
+    this.tutorialUpdate();
+	},
+	editTimerValueTutorial(){
+		if(this.tutoriais.editTimerValue === "completed") return;
+		helperFunctions.createMsg("Deslize os numeros para alterar-los", 2000);
+		this.tutoriais.editTimerValue = "completed";
+		this.tutorialUpdate();
+	},
+};
