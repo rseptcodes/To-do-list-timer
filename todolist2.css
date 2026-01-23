@@ -54,7 +54,7 @@ body {
 	color: var(--txt-color);
 	transition: all 0.6s ease-in-out;
 }
-.botaoTrocar {
+.headerButton {
 	all: unset;
 	width: 30px;
 	height: 30px;
@@ -102,16 +102,27 @@ body {
 	position: relative;
 	transform: translateX(-50%);
 }
+.mensagem {
+	font-size: 14px;
+	position: fixed;
+	color: var(--txt-color);
+	bottom: 2%;
+	left: 50%;
+	transform: translateX(-50%);
+	white-space: nowrap;
+	z-index: 5;
+	animation: fadeIn 1s ease forwards;
+}
 .mensagemVazio {
-	font-size: 20px;
+	font-size: 18px;
 	color: var(--txt-color);
 	text-align: center;
 	white-space: nowrap;
 	z-index: 5;
 	animation: fadeIn 1s ease forwards;
 }
-.mensagemVazio.oculto{
-	animation: fadeOut 1s ease forwards;
+.mensagem.desaparecer{
+	animation: fadeOut 0.7s ease forwards;
 }
 .botaoLixeira{
 	all: unset;
@@ -372,7 +383,7 @@ body {
   transform: scale(0.92);
   color: var(--sc-color);
 }
-.botaoTrocar:active {
+.headerButton:active {
   transform: scale(0.22);
   color: var(--sc-color);
 }
