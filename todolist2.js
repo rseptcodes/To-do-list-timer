@@ -857,8 +857,8 @@ return input;
    const segundos = this.secInput.value !== "" ? this.secInput.value : "00";
    
 		timerConfig.segundosTotais = (minutos * 60) + Number(segundos);
-		appState.setNewNumber(timerConfig.segundosTotais);
 		this.deletarEditUI();
+		appState.setNewNumber(timerConfig.segundosTotais);
 	},
 	deletarEditUI(){
 		if (this.editMenu === null) return;
