@@ -1,5 +1,5 @@
-// Objeto relacionado à troca de modos
-appConfig = {
+// Objeto geral de configuracoes
+const appConfig = {
 	moldura: null,
 	temaAtual: null,
 	init(){
@@ -14,6 +14,31 @@ appConfig = {
     overlay.criar();
 	},
 };
+window.addEventListener("DOMContentLoaded", () => {
+	appConfig.init();
+});
+// Objeto de estados
+const appState = {
+	listeners: [],
+	timerState: "stop", // pode ser "stop", "edit", 'running" e "finished"
+	timerNumber: 0, // o numero é dado em segundos
+	setNewNumber(newNumber){
+		this.timerNumber = newNumber;
+		this.updateSubscribers();
+	},
+	subscribe(funcao){
+		this.listeners.push(funcao);
+		funcao(this.timerNumber);
+	},
+	updateSubscribers(){
+		const valorBruto = this.timerNumber;
+   this.listeners.forEach((funcaoDoOuvinte) => {
+    funcaoDoOuvinte(this.timerNumber);
+  });
+	}
+};
+
+// Objeto de modos
 const modos = {
 	modoAtual: null,
 	init(){
@@ -35,12 +60,12 @@ const modos = {
   		modoAtual = "Timer";
       header.mudarTitulo(modoAtual);
       inputNotas.fechar();
-      visorUI.tipUI();
+      tutorialManager.visorTimerTutorial();
       nowBar.esconder();
 	} else {
 		modoAtual = "Notas";
 		header.mudarTitulo(modoAtual);
-      if (timerConfig.rodando && modoAtual !== "Timer") nowBar.mostrarNoCentro();
+      if (appState.timerState === "running" && modoAtual !== "Timer") nowBar.mostrarNoCentro();
 	}
 	this.update(modoAtual);
 	botaoFooter.update();
@@ -58,6 +83,7 @@ const modos = {
   	}
   }
 };
+// Objeto de temas
 const temas = {
 	temaAtual: null,
   init(){
@@ -81,6 +107,8 @@ const temas = {
   header.atualizarBotaoTema(this.temaAtual);
   },
 };
+
+// cria e administra o header
 const header = {
   botaoTrocar: null,
   botaoTema: null,
@@ -123,8 +151,7 @@ atualizarBotaoTema(temaAtual){
     if (this.titulo) this.titulo.innerText = texto;
   },
 };
-
-// objeto do modo de notas
+// objeto relacionado ao botao localizado na parte inferior central da tela
 const botaoFooter = {
 	botaoFooter: null,
 	emFocus: false,
@@ -149,7 +176,7 @@ const botaoFooter = {
 				// ao editar nota, ele nao faz o hide porque nao é derivado da acao do usuario, comportamento plausivel com a funcao, mas errado, irei consertar dps
 			}
 			this.focus();
-		} else if (modos.modoAtual === "Timer" && !timerConfig.rodando){
+		} else if (modos.modoAtual === "Timer" && appState.timerState !== "running"){
 			if(!overlay.element || !overlay.element.classList.contains("overlay--hidden")) overlay.hide(); else overlay.show();
 			editTimerValue.criarEditUI();
 			if (this.emFocus){
@@ -188,6 +215,9 @@ const botaoFooter = {
 		this.botaoFooter.classList.remove("footerButton--hidden");
 	}
 };
+
+
+// objetos relacionados ao modo notas
 const modoNotas = {
 	criarUINotas(){
 		this.listaNotas = helperFunctions.createElement("div", appConfig.moldura, "listaNotas");
@@ -231,479 +261,7 @@ const modoNotas = {
 	notasArray: [],
 	ultimoIndexSalvo: null
 };
-// cria o header e inicia o modo quando a pagina carregar
-window.addEventListener("DOMContentLoaded", () => {
-	appConfig.init();
-});
-// objeto do visor
-const visorUI = {
-	VisorUI: null,
-  visorP: null,
-  switchT: null,
-  primeiraVez: true,
-  iconesDoSwitch: '<i class="fa-solid fa-stopwatch" aria-hidden="true"></i> <i class="fa-solid fa-hourglass-half" aria-hidden="true"></i>',
-  visorUIState: "hidden",
-  // pode ser hidden ou reveal.
-  criar(){
-      if (this.VisorUI !== null) return;
-     this.VisorUI = helperFunctions.createElement("div", appConfig.moldura, "visorTimer");
-     
-      this.visorP = helperFunctions.createElement("p", this.VisorUI, "visorP");
-      
-      timerConfig.mostrar("visorP");
-       this.gerenciarSwitchModoTimer();
-       if(!botaoTimer.existe)botaoTimer.init();
-     this.VisorUI.addEventListener("click", (e) => {
-  if (e.target !== this.switchT && !this.switchT?.contains(e.target)) {
-  	if (timerConfig.rodando) return;
-  	navigator.vibrate(1);
-    this.gerenciarEstadoVisorUI();
-  }
-});
-},
-visorUIFocusON(){
-	if (this.VisorUI === null) return;
-	this.VisorUI.classList.add("visorTimer--focus");
-},
-visorUIFocusOFF(){
-	if (this.VisorUI === null) return;
-	this.VisorUI.classList.remove("visorTimer--focus");
-},
-gerenciarSwitchModoTimer(){
-	//  switch ira servir para trocar a funcao do timer, podendo ser cronometro ou alarme.
-	this.switchT = document.createElement("button");
-	this.switchT.classList.add("switch");
-      this.VisorUI.appendChild(this.switchT);
-     	this.switchT.innerHTML = this.iconesDoSwitch;
-     	this.switchT.addEventListener("click",(e) => {
-     		e.stopPropagation();
-		this.switchT.classList.toggle("switch--ativo");
-		navigator.vibrate(2);
-		timerConfig.configSwitch();
-		if (botaoFooter.botaoFooter)botaoFooter.update();
-	  console.log(timerConfig.config)
-	});
-},
-gerenciarEstadoVisorUI(){
-	if (this.visorUIState === "reveal"){
-		this.hide();
-	} else {
-		this.reveal();
-	}
-},
-reveal(){
-	if(this.switchT === null) this.gerenciarSwitchModoTimer();
-	this.VisorUI.classList.add("visorTimer--reveal");
-	this.visorUIState = "reveal";
-	this.switchT.classList.add("switch--reveal")
-},
-hide(){
-	if(this.switchT === null) this.gerenciarSwitchModoTimer();
-	this.VisorUI.classList.remove("visorTimer--reveal");
-  this.switchT.classList.remove("switch--reveal")
-	this.visorUIState = "hidden";
-},
-// o usuario nao sabe de forma clara que existe esse switch, entao, para despertar a curiosidade (e curiosidade leva a clique) eu decidi fazer uma "dica" ao criar a UI
-async tipUI(){
-	//irei adicionar mais coisas aqui (como vibracao e uma animacao por exemplo,mas por enquanto é experimental
-	if (!this.primeiraVez) return;
-	await helperFunctions.delay(1000)
-	this.reveal();
-	await helperFunctions.delay(2100);
-	this.hide();
-	this.primeiraVez = false;
-	console.log("rodou");
-}
-}
-
-// objeto do modo timer
-const modoTimer = {
-  numeroTimer: null,
-  botaoDiv: null,
-  timestampDiv: null,
-  criarUITimer() {
-  	visorUI.criar();
-      this.botaoDiv = helperFunctions.createElement("div", appConfig.moldura, "botaoDiv");
-      
-      this.timestampDiv = helperFunctions.createElement("div", appConfig.moldura, "timestampDiv");
-  },
-  async gerenciarOpacidadeTimerUI() {
-  const elementos = [
-    visorUI.VisorUI,
-    visorUI.visorP,
-    this.botaoDiv,
-    this.timestampDiv
-  ];
-
-  for (const el of elementos) {
-  	if (!el) continue;
-    await helperFunctions.gerenciarAnimacao(el);
-  	el?.classList.toggle("oculto");
-  }
-},
-  // funcoes relacionados a marcação do tempo
-criarTimestamp(){
-	if (!timerConfig.rodando || timerConfig.config === "timer") return;
-	const timestamp = document.createElement("div");
-	const volta = visorUI.visorP.innerText;
-	const qtd = document.body.querySelectorAll(".timestamp").length + 1;
-	timestamp.innerText = qtd + "          " + "|" + "          " + volta;
-	this.timestampDiv.appendChild(timestamp);
-	timestamp.className = "timestamp";
-	navigator.vibrate(20);
-	console.log([...modoTimer.timestampDiv.children].map(el => el.className));
-},
-async limparTimestamps() {
-  const timestamps = [...this.timestampDiv.children];
-  const velocidade = Math.max(80, 500 - timestamps.length * 35);
-for (let i = timestamps.length - 1; i >= 0; i--) {
-  const tsChild = timestamps[i];
-  tsChild.classList.add("desaparecer");
-  await helperFunctions.delay(velocidade);
-  tsChild.remove();
-}
-},
-};
-// funcoes relacionadas ao timer
-const timerConfig = {
-	inicioDoTimer: null,
-  agora: null,
-  segundos: null,
-  minutos: null,
-  numeroFormatado: null,
-  timerInterval: null,
-  pauseInterval: null,
-  segundos_pausados: 0,
-  rodando: null,
-  config: "stopwatch", // pode ser stopwatch ou timer
-  segundosTotais: 1, // pra testes
-  segundosRestantes: null,
-  configSwitch(){
-  	this.config = (this.config === "stopwatch") ? "timer" : "stopwatch";
-  },
-  rodarTimer(){
-  if(this.timerInterval) return;
-  this.inicioDoTimer = performance.now() - (this.segundos_pausados * 1000);
-  this.rodando = true;
-  if (visorUI.visorUIState === "reveal") visorUI.hide();
-  this.timerInterval = setInterval(() => {
-	this.agora = performance.now();
-	this.segundos = (this.agora - this.inicioDoTimer) / 1000;
-	this.configurar(this.config);
-	},500);
-  },
-  configurar(){
-		if (!nowBar.element)nowBar.criar();
-  	if (this.config === "stopwatch"){
-  	this.mostrar("visorP", this.segundos)
-  	this.mostrar("nowBar", this.segundos)
-  	} else if (this.config === "timer"){
-   if (this.segundosRestantes === null) this.segundosRestantes = this.segundosTotais
-   this.verificarTimerEnd();
-   this.segundosRestantes = Math.ceil(this.segundosTotais - this.segundos);
-   this.mostrar("visorP", this.segundosRestantes)
-   this.mostrar("nowBar", this.segundosRestantes)
-  	}
-  },
-  verificarTimerEnd(){
-  if (this.segundosRestantes <= 0){
-    timerFinishedScreen.show();
-  	visorUI.visorUIFocusON();
-  	navigator.vibrate(100);
-  }
-  },
-  timerEnd(){
-  	timerFinishedScreen.hide();
-  	visorUI.visorUIFocusOFF();
-  	this.reset();
-    botaoTimer.atualizar("resetado");
-  },
-  reset() {
-   clearInterval(this.timerInterval);
-   this.timerInterval = null;
-   this.inicioDoTimer = null;
-   this.agora = null;
-   this.segundos = null;
-   this.minutos = null;
-   this.segundos_pausados = 0;
-   this.rodando = false;
-   this.mostrar("visorP", this.segundos)
-   this.numeroFormatado = null,
-   this.segundosRestantes = null;
-   nowBar.deletar();
-	},
-	pause() {
-		this.segundos_pausados = this.segundos;
-		this.mostrar(this.segundos_pausados);
-		this.segundos = this.segundos_pausados;
-		clearInterval(this.timerInterval);
-		this.timerInterval = null;
-		this.rodando = false;
-	},
-	resume(){
-		this.rodarTimer();
-	},
-	formatar(segundos){
-  const minutos = Math.trunc(segundos / 60);
-  const minsStr = String(minutos).padStart(2, "0");
-  const segs = Math.trunc(segundos % 60);
-  const segsStr = String(Math.abs(segs)).padStart(2, "0");
-  if (segs > 0) this.numeroFormatado = minsStr + ":" + segsStr; else this.numeroFormatado = "-" + minsStr + ":" + segsStr;
-},
-	mostrar(local,segundos){
-	if(!this.rodando) {
-		if (segundos){
-		this.formatar(segundos);
-		visorUI.visorP.innerText = this.numeroFormatado;
-		} else {
-			visorUI.visorP.innerText = "00:00";
-		}
-		return;
-	}
-	this.formatar(segundos);
-	if(local === "visorP") {
-		if(segundos !== null) {
-			visorUI.visorP.innerText = this.numeroFormatado; 
-			} else {
-				visorUI.visorP.innerText = "00:00"
-			}
-	} else if (local === "nowBar") {
-		nowBar.atualizarNowBar();
-	}
-	},
-}
-// tela de timer
-const timerFinishedScreen = {
-	element: null,
-	criar(){
-	 if(this.element !== null) return;
-	 this.element = helperFunctions.createElement("div", appConfig.moldura,"timerFinishedScreen");
-	 const screenArrow = helperFunctions.createElement("div", this.element, "screenArrow");
-	 const screenTip = helperFunctions.createElement("p", this.element, "screenTip");
-	 screenTip.innerText = "deslize para cima para encerrar";
-	},
-	show(){
-		if(this.element === null) this.criar();
-		this.element.classList.remove("timerFinishedScreen--hidden");
-	},
-	hide(){
-	 	if(this.element === null) this.criar();
-		this.element.classList.add("timerFinishedScreen--hidden");
-	},
-};
-//funcoes relacionadas á nowBar
-const nowBar = {
-  	element: null,
-  	isVisible: false,
-  	estado: "oculto",
-  	// estados possiveis: centro, minimizado e oculto.
-  	timeoutId: null,
-  	primeiraVez: true,
-  	criar(){
-  		if (this.element) return;
-  		this.element = document.createElement("div");
-     	this.element.className = "nowBar";
-	header.header.appendChild(this.element);
-  	},
-  	mostrarNoCentro(){
-  		if(!this.primeiraVez){
-  			this.mostrarMinimizado();
-  			return;
-  		}
-  		if (!this.element) this.criar();
-  		if (this.timeoutId) {
-  			clearTimeout(this.timeoutId);
-  		}
-  		this.element.classList.remove("nowBar--oculto");
-  		this.element.classList.remove("nowBar--minimizado");
-  		this.element.classList.add("nowBar--centro");
-  		this.isVisible = true;
-  		this.estado = "centro";
-  		this.timeoutId = setTimeout(() => {
-  			if (this.estado === "centro"){
-  			this.mostrarMinimizado();
-  			this.primeiraVez = false;
-  			}
-  		},5000);
-  	},
-  	mostrarMinimizado(){
-  		if (!this.element) this.criar();
-  		this.element.classList.remove("nowBar--oculto");
-  		this.element.classList.add("nowBar--minimizado");
-  		this.element.classList.remove("nowBar--centro");
-  		this.estado = "minimizado";
-  		this.isVisible = true;
-  	},
-  	esconder(){
-  		if (!this.isVisible || !this.element) return;
-  		this.element.classList.add("nowBar--oculto");
-  		this.element.classList.remove("nowBar--minimizado");
-  		this.element.classList.remove("nowBar--centro");
-  		this.estado = "oculto";
-  		this.isVisible = false;
-  		},
-  	atualizarNowBar(){
-  		if (!this.isVisible || !this.element) return;
-  		const texto = visorUI.visorP.innerText;
-  		this.element.innerText = texto;
-  	},
-  	deletar(){
-  	if (!this.element) return;
-  	this.esconder();
-  	this.primeiraVez = true;
-  	if (this.timeoutId) {
-  		clearTimeout(this.timeoutId);
-  		this.timeoutId = null;
-  	}
-  	setTimeout(() => {
-    if (this.element && this.element.parentNode) {
-	this.element.remove();
-	this.element = null;
-	this.isVisible = false;
-	this.estado = "oculto";
-	console.log("NowBar removida");
-  	}
-  	}, 300);
-},
-};
-const botaoTimer = {
-	existe: false,
-	async criarBotaoTimer(acao){
-	if (!modoTimer.botaoDiv){
-		await helperFunctions.delay(0);
-	}
-	const botaoTimer = document.createElement("button");
-	botaoTimer.classList.add("botaoTimer", acao);
-	modoTimer.botaoDiv.appendChild(botaoTimer);
-	botaoTimer.innerText = acao;
-	botaoTimer.addEventListener("click",() => {
-  this.definirFuncoes(botaoTimer, acao);
-  tutorialManager.timestampTutorial();
-  navigator.vibrate(2);
-	});
-	this.atualizar("resetado");
-	this.existe = true; 
-},
-// define a funcao dos botoesTimer
-definirFuncoes(el, acao){
-			if (acao === "pause"){
-			if(timerConfig.rodando) {
-				timerConfig.pause();
-				el.innerText = "resume";
-				this.atualizar("pause");
-				} else {
-				timerConfig.resume();
-				el.innerText = "pause";
-				this.atualizar("pause");
-				}
-		} else if (acao === "iniciar") {
-			if (!timerConfig.rodando) {
-				timerConfig.rodarTimer();
-		this.atualizar("rodando");
-		} 
-		} else if (acao === "reset") {
-			timerConfig.reset();
-		this.atualizar("resetado")
-		}
-},
-// minimiza ou amplia
-atualizar(estado){
-	const botaoTimerObj = {
-		botaoIniciar: document.querySelector(".iniciar"),
-		botaoPause: document.querySelector(".pause"),
-		botaoReset:document.querySelector(".reset"),
-	};
-	if (estado === "rodando") {
-		botaoTimerObj.botaoIniciar.classList.add("minimizado", "piscando")
-		botaoTimerObj.botaoPause.classList.remove("minimizado");
-		botaoTimerObj.botaoReset.classList.remove("minimizado");
-		botaoTimerObj.botaoIniciar.innerText = "";
-		botaoTimerObj.botaoPause.innerText = "pause";
-		botaoTimerObj.botaoReset.innerText = "reset";
-	} else if (estado === "resetado"){
-		botaoTimerObj.botaoIniciar.classList.remove("minimizado")
-		botaoTimerObj.botaoPause.classList.add("minimizado");
-		botaoTimerObj.botaoReset.classList.add("minimizado");
-		botaoTimerObj.botaoIniciar.innerText = "iniciar";
-		botaoTimerObj.botaoPause.innerText = "";
-		botaoTimerObj.botaoReset.innerText = "";
-		modoTimer.limparTimestamps();
-	} else if (estado === "pause"){
-		botaoTimerObj.botaoIniciar.classList.toggle("piscando")
-	}
-},
-init(){
-this.criarBotaoTimer("pause");
-this.criarBotaoTimer("iniciar");
-this.criarBotaoTimer("reset");
-},
-};
-const editTimerValue = {
-	editMenu: null,
-	editValue: null,
-	minInput: null,
-	secInput: null,
-	criarEditUI(){
-		if(this.editMenu !== null || this.minInput !== null || this.secInput !== null) return;
-		this.editMenu = document.createElement("div");
-		this.editMenu.className = "editMenu";
-		appConfig.moldura.appendChild(this.editMenu);
-		this.minInput = this.criarInput(this.minInput);
-		this.secInput = this.criarInput(this.secInput);
-	},
-	criarInput(input){
-		input = document.createElement("input");
-		input.required = true;
-		input.className = "inputEditValue";
-		input.maxLength = "2";
-		input.addEventListener("click",() => {
-			this.focus(input)
-		});
-		if (document.querySelectorAll(".inputEditValue").length === 0) input.placeholder = "MM"; else input.placeholder = "SS";
-		this.editMenu.appendChild(input);
-		input.addEventListener("keydown", (e) => {
-  if (
-    !/[0-9]/.test(e.key) &&
-    e.key !== "Backspace"
-  ) {
-    e.preventDefault()
-  }
-})
-    input.addEventListener("input", () => {
-  input.value = input.value.replace(/\D/g, "")
-})
-return input;
-	},
-	focus(input){
-  input.focus();
-  // se for mobile deixa o input visivel
-  const isMobile = /Mobi|Android/i.test(navigator.userAgent);
-  if (!isMobile) return;
-  
-  setTimeout(() => {
-    input.scrollIntoView({ 
-      behavior: 'smooth', 
-      block: 'center' 
-    });
-  }, 300);
-},
-	async transformarValorInput(){
-		const minutos = this.minInput.value !== "" ? this.minInput.value : "1";
-   const segundos = this.secInput.value !== "" ? this.secInput.value : "00";
-   
-		timerConfig.segundosTotais = (minutos * 60) + Number(segundos);
-		console.log(timerConfig.segundosTotais);
-		timerConfig.mostrar("visorP", timerConfig.segundosTotais);
-		this.deletarEditUI();
-	},
-	deletarEditUI(){
-		if (this.editMenu === null) return;
-		this.editMenu.remove();
-		this.editMenu = null;
-		this.secInput = null;
-		this.minInput = null;
-	},
-};
+// objeto do input de criacao/edicao de notas
 const inputNotas = {
 	input: null,
 	criar(placeholder){
@@ -764,7 +322,7 @@ fechar(texto){
   modoNotas.ultimoIndexSalvo = null;
 },
 };
-// objeto com funcoes relacionadas a criacao de notas
+// objeto relacionado a criacao de notas
 const createNotas = {
 salvarTextoEmArray(texto, index){
   const nota = { id: this.gerarId(), text: texto };
@@ -878,7 +436,441 @@ renderizarNotasSalvas(){
   });
 },
 };
-// funcoes relacionadas à animacao em geral
+
+
+// objetos relacionados ao modo timer
+const modoTimer = {
+  numeroTimer: null,
+  botaoDiv: null,
+  timestampDiv: null,
+  criarUITimer() {
+  	visorUI.criar();
+      this.botaoDiv = helperFunctions.createElement("div", appConfig.moldura, "botaoDiv");
+      
+      this.timestampDiv = helperFunctions.createElement("div", appConfig.moldura, "timestampDiv");
+  },
+  async gerenciarOpacidadeTimerUI() {
+  const elementos = [
+    visorUI.VisorUI,
+    visorUI.visorP,
+    this.botaoDiv,
+    this.timestampDiv
+  ];
+
+  for (const el of elementos) {
+  	if (!el) continue;
+    await helperFunctions.gerenciarAnimacao(el);
+  	el?.classList.toggle("oculto");
+  }
+},
+  // funcoes relacionados a marcação do tempo
+criarTimestamp(){
+	if (appState.timerState !== "running" || timerConfig.config === "timer") return;
+	const timestamp = document.createElement("div");
+	const volta = visorUI.visorP.innerText;
+	const qtd = document.body.querySelectorAll(".timestamp").length + 1;
+	timestamp.innerText = qtd + "          " + "|" + "          " + volta;
+	this.timestampDiv.appendChild(timestamp);
+	timestamp.className = "timestamp";
+	navigator.vibrate(20);
+	console.log([...modoTimer.timestampDiv.children].map(el => el.className));
+},
+async limparTimestamps() {
+  const timestamps = [...this.timestampDiv.children];
+  const velocidade = Math.max(80, 500 - timestamps.length * 35);
+for (let i = timestamps.length - 1; i >= 0; i--) {
+  const tsChild = timestamps[i];
+  tsChild.classList.add("desaparecer");
+  await helperFunctions.delay(velocidade);
+  tsChild.remove();
+}
+},
+};
+// objeto de configuracao do timer
+const timerConfig = {
+	inicioDoTimer: null,
+  agora: null,
+  segundos: null,
+  minutos: null,
+  timerInterval: null,
+  pauseInterval: null,
+  segundos_pausados: 0,
+  config: "stopwatch", // pode ser stopwatch ou timer
+  segundosTotais: 10, // pra testes
+  segundosRestantes: null,
+  configSwitch(){
+  	this.config = (this.config === "stopwatch") ? "timer" : "stopwatch";
+  },
+  rodarTimer(){
+  if(this.timerInterval) return;
+  this.inicioDoTimer = performance.now() - (this.segundos_pausados * 1000);
+  appState.timerState = "running";
+  if (visorUI.visorUIState === "reveal") visorUI.hide();
+  this.timerInterval = setInterval(() => {
+	this.agora = performance.now();
+	this.segundos = (this.agora - this.inicioDoTimer) / 1000;
+	this.configurar(this.config);
+	},500);
+  },
+  configurar(){
+	 if (!nowBar.element)nowBar.criar();
+   if (this.config === "timer"){
+   if (this.segundosRestantes === null) this.segundosRestantes = this.segundosTotais
+   this.verificarTimerEnd();
+   this.segundosRestantes = Math.ceil(this.segundosTotais - this.segundos);
+   appState.setNewNumber(this.segundosRestantes);
+  	} else {
+  		appState.setNewNumber(this.segundos);
+  	}
+  },
+  verificarTimerEnd(){
+  if (this.segundosRestantes <= 0){
+    timerFinishedScreen.show();
+  	visorUI.visorUIFocusON();
+  	navigator.vibrate(100);
+  }
+  },
+  timerEnd(){
+  	timerFinishedScreen.hide();
+  	visorUI.visorUIFocusOFF();
+  	this.reset();
+    botaoTimer.atualizar("resetado");
+  },
+  reset() {
+   clearInterval(this.timerInterval);
+   this.timerInterval = null;
+   this.inicioDoTimer = null;
+   this.agora = null;
+   this.segundos = null;
+   this.minutos = null;
+   this.segundos_pausados = 0;
+   appState.timerState = "stop";
+   this.segundosRestantes = null;
+   appState.setNewNumber(this.segundos);
+   nowBar.deletar();
+	},
+	pause() {
+		this.segundos_pausados = this.segundos;
+		this.segundos = this.segundos_pausados;
+		appState.setNewNumber(this.segundos)
+		appState.timerState = "stop";
+		clearInterval(this.timerInterval);
+		this.timerInterval = null;
+	},
+	resume(){
+		this.rodarTimer();
+	},
+}
+// objeto do visor
+const visorUI = {
+	VisorUI: null,
+  visorP: null,
+  switchT: null,
+  iconesDoSwitch: '<i class="fa-solid fa-stopwatch" aria-hidden="true"></i> <i class="fa-solid fa-hourglass-half" aria-hidden="true"></i>',
+  visorUIState: "hidden",
+  // pode ser hidden ou reveal.
+  criar(){
+      if (this.VisorUI !== null) return;
+     this.VisorUI = helperFunctions.createElement("div", appConfig.moldura, "visorTimer");
+     
+      this.visorP = helperFunctions.createElement("p", this.VisorUI, "visorP");
+      appState.subscribe((valor) => {
+      	const tempoFormatado = helperFunctions.formatar(valor);
+      	this.visorP.innerText = tempoFormatado;
+      });
+       this.gerenciarSwitchModoTimer();
+       if(!botaoTimer.existe)botaoTimer.init();
+     this.VisorUI.addEventListener("click", (e) => {
+  if (e.target !== this.switchT && !this.switchT?.contains(e.target)) {
+  	if (appState.timerState === "running") return;
+  	navigator.vibrate(1);
+    this.gerenciarEstadoVisorUI();
+  }
+});
+},
+visorUIFocusON(){
+	if (this.VisorUI === null) return;
+	this.VisorUI.classList.add("visorTimer--focus");
+},
+visorUIFocusOFF(){
+	if (this.VisorUI === null) return;
+	this.VisorUI.classList.remove("visorTimer--focus");
+},
+gerenciarSwitchModoTimer(){
+	//  switch ira servir para trocar a funcao do timer, podendo ser cronometro ou alarme.
+	this.switchT = document.createElement("button");
+	this.switchT.classList.add("switch");
+      this.VisorUI.appendChild(this.switchT);
+     	this.switchT.innerHTML = this.iconesDoSwitch;
+     	this.switchT.addEventListener("click",(e) => {
+     		e.stopPropagation();
+		this.switchT.classList.toggle("switch--ativo");
+		navigator.vibrate(2);
+		timerConfig.configSwitch();
+		if (botaoFooter.botaoFooter)botaoFooter.update();
+	  console.log(timerConfig.config)
+	});
+},
+gerenciarEstadoVisorUI(){
+	if (this.visorUIState === "reveal"){
+		this.hide();
+	} else {
+		this.reveal();
+	}
+},
+reveal(){
+	if(this.switchT === null) this.gerenciarSwitchModoTimer();
+	this.VisorUI.classList.add("visorTimer--reveal");
+	this.visorUIState = "reveal";
+	this.switchT.classList.add("switch--reveal")
+},
+hide(){
+	if(this.switchT === null) this.gerenciarSwitchModoTimer();
+	this.VisorUI.classList.remove("visorTimer--reveal");
+  this.switchT.classList.remove("switch--reveal")
+	this.visorUIState = "hidden";
+},
+}
+// tela de finalizacao do timer
+const timerFinishedScreen = {
+	element: null,
+	criar(){
+	 if(this.element !== null) return;
+	 this.element = helperFunctions.createElement("div", appConfig.moldura,"timerFinishedScreen");
+	 const screenArrow = helperFunctions.createElement("div", this.element, "screenArrow");
+	 const screenTip = helperFunctions.createElement("p", this.element, "screenTip");
+	 screenTip.innerText = "deslize para cima para encerrar";
+	},
+	show(){
+		if(this.element === null) this.criar();
+		this.element.classList.remove("timerFinishedScreen--hidden");
+	},
+	hide(){
+	 	if(this.element === null) this.criar();
+		this.element.classList.add("timerFinishedScreen--hidden");
+	},
+};
+// funcoes relacionadas á nowBar
+const nowBar = {
+  	element: null,
+  	isVisible: false,
+  	estado: "oculto",
+  	// estados possiveis: centro, minimizado e oculto.
+  	timeoutId: null,
+  	primeiraVez: true,
+  	criar(){
+  		if (this.element) return;
+  		this.element = document.createElement("div");
+     	this.element.className = "nowBar";
+	header.header.appendChild(this.element);
+	    appState.subscribe((valor) => {
+	    	const tempoFormatado = helperFunctions.formatar(valor);
+	    	this.element.innerText = tempoFormatado;
+	    });
+  	},
+  	mostrarNoCentro(){
+  		if(!this.primeiraVez){
+  			this.mostrarMinimizado();
+  			return;
+  		}
+  		if (!this.element) this.criar();
+  		if (this.timeoutId) {
+  			clearTimeout(this.timeoutId);
+  		}
+  		this.element.classList.remove("nowBar--oculto");
+  		this.element.classList.remove("nowBar--minimizado");
+  		this.element.classList.add("nowBar--centro");
+  		this.isVisible = true;
+  		this.estado = "centro";
+  		this.timeoutId = setTimeout(() => {
+  			if (this.estado === "centro"){
+  			this.mostrarMinimizado();
+  			this.primeiraVez = false;
+  			}
+  		},5000);
+  	},
+  	mostrarMinimizado(){
+  		if (!this.element) this.criar();
+  		this.element.classList.remove("nowBar--oculto");
+  		this.element.classList.add("nowBar--minimizado");
+  		this.element.classList.remove("nowBar--centro");
+  		this.estado = "minimizado";
+  		this.isVisible = true;
+  	},
+  	esconder(){
+  		if (!this.isVisible || !this.element) return;
+  		this.element.classList.add("nowBar--oculto");
+  		this.element.classList.remove("nowBar--minimizado");
+  		this.element.classList.remove("nowBar--centro");
+  		this.estado = "oculto";
+  		this.isVisible = false;
+  		},
+  	atualizarNowBar(){
+  		if (!this.isVisible || !this.element) return;
+  		const texto = visorUI.visorP.innerText;
+  		this.element.innerText = texto;
+  	},
+  	deletar(){
+  	if (!this.element) return;
+  	this.esconder();
+  	this.primeiraVez = true;
+  	if (this.timeoutId) {
+  		clearTimeout(this.timeoutId);
+  		this.timeoutId = null;
+  	}
+  	setTimeout(() => {
+    if (this.element && this.element.parentNode) {
+	this.element.remove();
+	this.element = null;
+	this.isVisible = false;
+	this.estado = "oculto";
+	console.log("NowBar removida");
+  	}
+  	}, 300);
+},
+};
+// objeto dos botoes
+const botaoTimer = {
+	existe: false,
+	async criarBotaoTimer(acao){
+	if (!modoTimer.botaoDiv){
+		await helperFunctions.delay(0);
+	}
+	const botaoTimer = document.createElement("button");
+	botaoTimer.classList.add("botaoTimer", acao);
+	modoTimer.botaoDiv.appendChild(botaoTimer);
+	botaoTimer.innerText = acao;
+	botaoTimer.addEventListener("click",() => {
+  this.definirFuncoes(botaoTimer, acao);
+  tutorialManager.timestampTutorial();
+  navigator.vibrate(2);
+	});
+	this.atualizar("resetado");
+	this.existe = true; 
+},
+// define a funcao dos botoesTimer
+definirFuncoes(el, acao){
+			if (acao === "pause"){
+			if(appState.timerState === "running") {
+				timerConfig.pause();
+				el.innerText = "resume";
+				this.atualizar("pause");
+				} else {
+				timerConfig.resume();
+				el.innerText = "pause";
+				this.atualizar("pause");
+				}
+		} else if (acao === "iniciar") {
+			if (appState.timerState !== "running") {
+				timerConfig.rodarTimer();
+		this.atualizar("rodando");
+		} 
+		} else if (acao === "reset") {
+			timerConfig.reset();
+		this.atualizar("resetado")
+		}
+},
+// minimiza ou amplia
+atualizar(estado){
+	const botaoTimerObj = {
+		botaoIniciar: document.querySelector(".iniciar"),
+		botaoPause: document.querySelector(".pause"),
+		botaoReset:document.querySelector(".reset"),
+	};
+	if (estado === "rodando") {
+		botaoTimerObj.botaoIniciar.classList.add("minimizado", "piscando")
+		botaoTimerObj.botaoPause.classList.remove("minimizado");
+		botaoTimerObj.botaoReset.classList.remove("minimizado");
+		botaoTimerObj.botaoIniciar.innerText = "";
+		botaoTimerObj.botaoPause.innerText = "pause";
+		botaoTimerObj.botaoReset.innerText = "reset";
+	} else if (estado === "resetado"){
+		botaoTimerObj.botaoIniciar.classList.remove("minimizado")
+		botaoTimerObj.botaoPause.classList.add("minimizado");
+		botaoTimerObj.botaoReset.classList.add("minimizado");
+		botaoTimerObj.botaoIniciar.innerText = "iniciar";
+		botaoTimerObj.botaoPause.innerText = "";
+		botaoTimerObj.botaoReset.innerText = "";
+		modoTimer.limparTimestamps();
+	} else if (estado === "pause"){
+		botaoTimerObj.botaoIniciar.classList.toggle("piscando")
+	}
+},
+init(){
+this.criarBotaoTimer("pause");
+this.criarBotaoTimer("iniciar");
+this.criarBotaoTimer("reset");
+},
+};
+// objeto relacionado a edicao do timer (tanto mobile, quanto em desktop)
+const editTimerValue = {
+	editMenu: null,
+	editValue: null,
+	minInput: null,
+	secInput: null,
+	criarEditUI(){
+		if(this.editMenu !== null || this.minInput !== null || this.secInput !== null) return;
+		this.editMenu = document.createElement("div");
+		this.editMenu.className = "editMenu";
+		appConfig.moldura.appendChild(this.editMenu);
+		this.minInput = this.criarInput(this.minInput);
+		this.secInput = this.criarInput(this.secInput);
+	},
+	criarInput(input){
+		input = document.createElement("input");
+		input.required = true;
+		input.className = "inputEditValue";
+		input.maxLength = "2";
+		input.addEventListener("click",() => {
+			this.focus(input)
+		});
+		if (document.querySelectorAll(".inputEditValue").length === 0) input.placeholder = "MM"; else input.placeholder = "SS";
+		this.editMenu.appendChild(input);
+		input.addEventListener("keydown", (e) => {
+  if (
+    !/[0-9]/.test(e.key) &&
+    e.key !== "Backspace"
+  ) {
+    e.preventDefault()
+  }
+})
+    input.addEventListener("input", () => {
+  input.value = input.value.replace(/\D/g, "")
+})
+return input;
+	},
+	focus(input){
+  input.focus();
+  // se for mobile deixa o input visivel
+  const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+  if (!isMobile) return;
+  
+  setTimeout(() => {
+    input.scrollIntoView({ 
+      behavior: 'smooth', 
+      block: 'center' 
+    });
+  }, 300);
+},
+	async transformarValorInput(){
+		const minutos = this.minInput.value !== "" ? this.minInput.value : "1";
+   const segundos = this.secInput.value !== "" ? this.secInput.value : "00";
+   
+		timerConfig.segundosTotais = (minutos * 60) + Number(segundos);
+		appState.setNewNumber(timerConfig.segundosTotais);
+		this.deletarEditUI();
+	},
+	deletarEditUI(){
+		if (this.editMenu === null) return;
+		this.editMenu.remove();
+		this.editMenu = null;
+		this.secInput = null;
+		this.minInput = null;
+	},
+};
+// objeto com funcoes relacionadas a criacao de notas
+
+// funcoes "helpers"
 const helperFunctions = {
 delay(ms){
 	return new Promise(resolve =>
@@ -918,8 +910,25 @@ async createMsg(texto, duracao){
 	await this.delay(700);
   mensagem.remove();
 },
+formatar(segundos){
+	let numeroFormatado;
+	if (segundos !== 0){
+  const minutos = Math.trunc(segundos / 60);
+  const minsStr = String(minutos).padStart(2, "0");
+  const segs = Math.trunc(segundos % 60);
+  const segsStr = String(Math.abs(segs)).padStart(2, "0");
+    const sinal = segundos < 0 ? "-" : "";
+    numeroFormatado = sinal + minsStr + ":" + segsStr;
+
+  return numeroFormatado;
+	} else {
+		numeroFormatado = "00:00";
+		return numeroFormatado;
+	}
+},
 };
-// experimental, reorganizar efeitos depois
+
+// overlays
 const overlay = {
 	element: null,
   criar(){
@@ -928,7 +937,6 @@ const overlay = {
   	this.element.className = "overlay";
   	appConfig.moldura.appendChild(this.element);
   	this.element.addEventListener("click", () => {
-  		if(this.element?.classList.contains("overlay--timer")) return;
   if (document.querySelector(".inputNotas")) {
     inputNotas.fechar();
   }
@@ -950,8 +958,7 @@ const overlay = {
 	},
 };
 
-// MUITO experimental, pode quebrar
-
+// objeto relacionado aos gestos
 const setGestures = {
 	verificarDeslizamento(elemento, callback){
 		const distancia = 100;
@@ -981,7 +988,7 @@ const setGestures = {
 	},
 	onSwipe(direcao, diff){
 		//criarTimestamp
-		if(direcao === "right" && timerConfig.rodando && timerConfig.config === "stopwatch") {
+		if(direcao === "right" && appState.timerState === "running" && timerConfig.config === "stopwatch") {
 			modoTimer.criarTimestamp();
 			} else if (direcao === "up" && timerConfig.segundosRestantes < 0)	{
 				timerConfig.timerEnd();
@@ -1011,12 +1018,14 @@ const setGestures = {
 }
 };
 
+// objeto relacionado aos tutoriais
 const tutorialManager = {
 	tutoriais: {
 		 //pode ser inProgress ou completed
 		createTimestamp: "inProgress",
 		toDoList: "inProgress",
 		editTimerValue: "inProgress",
+		visorTimer: "inProgress",
 	},
 	init(){
 	  this.getTutorialStatus();
@@ -1052,5 +1061,16 @@ const tutorialManager = {
 		helperFunctions.createMsg("Deslize os numeros para alterar-los", 2000);
 		this.tutoriais.editTimerValue = "completed";
 		this.tutorialUpdate();
+	},
+	async visorTimerTutorial(){
+	//irei adicionar mais coisas aqui (como vibracao e uma animacao por exemplo,mas por enquanto é experimental
+	if (this.tutoriais.visorTimer === "completed") return;
+	helperFunctions.createMsg("Toque no visor para alterar o modo do timer!", 4000);
+	await helperFunctions.delay(1000);
+	visorUI.reveal();
+	await helperFunctions.delay(4000);
+	visorUI.hide();
+	this.tutoriais.visorTimer = "completed";
+	this.tutorialUpdate();
 	},
 };
