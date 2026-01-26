@@ -20,7 +20,7 @@ window.addEventListener("DOMContentLoaded", () => {
 // Objeto de estados
 const appState = {
 	listeners: [],
-	timerState: "stop", // pode ser "stop", "edit", 'running" e "finished"
+	timerState: "stop", // pode ser "stop", "paused", edit", 'running" e "finished"
 	timerNumber: 0, // o numero é dado em segundos
 	setNewNumber(newNumber){
 		this.timerNumber = newNumber;
@@ -31,7 +31,7 @@ const appState = {
 		funcao(this.timerNumber);
 	},
 	updateSubscribers(){
-		const valorBruto = this.timerNumber;
+	const valorBruto = this.timerNumber;
    this.listeners.forEach((funcaoDoOuvinte) => {
     funcaoDoOuvinte(this.timerNumber);
   });
@@ -446,6 +446,7 @@ const modoTimer = {
   criarUITimer() {
   	visorUI.criar();
       this.botaoDiv = helperFunctions.createElement("div", appConfig.moldura, "botaoDiv");
+      if(!botaoTimer.existe)botaoTimer.init();
       
       this.timestampDiv = helperFunctions.createElement("div", appConfig.moldura, "timestampDiv");
   },
@@ -534,7 +535,6 @@ const timerConfig = {
   	timerFinishedScreen.hide();
   	visorUI.visorUIFocusOFF();
   	this.reset();
-    botaoTimer.atualizar("resetado");
   },
   reset() {
    clearInterval(this.timerInterval);
@@ -552,8 +552,11 @@ const timerConfig = {
 	pause() {
 		this.segundos_pausados = this.segundos;
 		this.segundos = this.segundos_pausados;
-		appState.setNewNumber(this.segundos)
-		appState.timerState = "stop";
+		if(this.config === "stopwatch") {
+			appState.setNewNumber(this.segundos) } else {
+				appState.setNewNumber(this.segundosRestantes);
+			}
+		appState.timerState = "paused";
 		clearInterval(this.timerInterval);
 		this.timerInterval = null;
 	},
@@ -579,7 +582,6 @@ const visorUI = {
       	this.visorP.innerText = tempoFormatado;
       });
        this.gerenciarSwitchModoTimer();
-       if(!botaoTimer.existe)botaoTimer.init();
      this.VisorUI.addEventListener("click", (e) => {
   if (e.target !== this.switchT && !this.switchT?.contains(e.target)) {
   	if (appState.timerState === "running") return;
@@ -732,21 +734,20 @@ const nowBar = {
 // objeto dos botoes
 const botaoTimer = {
 	existe: false,
-	async criarBotaoTimer(acao){
-	if (!modoTimer.botaoDiv){
-		await helperFunctions.delay(0);
-	}
-	const botaoTimer = document.createElement("button");
-	botaoTimer.classList.add("botaoTimer", acao);
-	modoTimer.botaoDiv.appendChild(botaoTimer);
+	botoes: {},
+	duracaoRestante: 10,// fallback
+	criarBotaoTimer(acao){
+	const botaoTimer = helperFunctions.createElement("button", modoTimer.botaoDiv, "botaoTimer");
+	botaoTimer.classList.add(acao);
 	botaoTimer.innerText = acao;
 	botaoTimer.addEventListener("click",() => {
   this.definirFuncoes(botaoTimer, acao);
   tutorialManager.timestampTutorial();
   navigator.vibrate(2);
+  this.duracaoRestante = timerConfig.segundosRestantes;
+  this.render();
 	});
-	this.atualizar("resetado");
-	this.existe = true; 
+	return botaoTimer;
 },
 // define a funcao dos botoesTimer
 definirFuncoes(el, acao){
@@ -754,52 +755,66 @@ definirFuncoes(el, acao){
 			if(appState.timerState === "running") {
 				timerConfig.pause();
 				el.innerText = "resume";
-				this.atualizar("pause");
 				} else {
 				timerConfig.resume();
 				el.innerText = "pause";
-				this.atualizar("pause");
 				}
 		} else if (acao === "iniciar") {
 			if (appState.timerState !== "running") {
 				timerConfig.rodarTimer();
-		this.atualizar("rodando");
 		} 
 		} else if (acao === "reset") {
 			timerConfig.reset();
-		this.atualizar("resetado")
 		}
 },
-// minimiza ou amplia
-atualizar(estado){
-	const botaoTimerObj = {
-		botaoIniciar: document.querySelector(".iniciar"),
-		botaoPause: document.querySelector(".pause"),
-		botaoReset:document.querySelector(".reset"),
-	};
-	if (estado === "rodando") {
-		botaoTimerObj.botaoIniciar.classList.add("minimizado", "piscando")
-		botaoTimerObj.botaoPause.classList.remove("minimizado");
-		botaoTimerObj.botaoReset.classList.remove("minimizado");
-		botaoTimerObj.botaoIniciar.innerText = "";
-		botaoTimerObj.botaoPause.innerText = "pause";
-		botaoTimerObj.botaoReset.innerText = "reset";
-	} else if (estado === "resetado"){
-		botaoTimerObj.botaoIniciar.classList.remove("minimizado")
-		botaoTimerObj.botaoPause.classList.add("minimizado");
-		botaoTimerObj.botaoReset.classList.add("minimizado");
-		botaoTimerObj.botaoIniciar.innerText = "iniciar";
-		botaoTimerObj.botaoPause.innerText = "";
-		botaoTimerObj.botaoReset.innerText = "";
-		modoTimer.limparTimestamps();
-	} else if (estado === "pause"){
-		botaoTimerObj.botaoIniciar.classList.toggle("piscando")
+render() {
+  if (!this.existe || !this.botoes.iniciar) return;
+  this.botoes.iniciar.classList.remove("minimizado");
+  this.botoes.pause.classList.remove("minimizado");
+  this.botoes.reset.classList.remove("minimizado");
+
+  this.botoes.iniciar.innerText = "iniciar";
+  this.botoes.pause.innerText = "pause";
+  this.botoes.reset.innerText = "reset";
+
+  if (appState.timerState === "stop") {
+    this.botoes.pause.classList.add("minimizado");
+    this.botoes.reset.classList.add("minimizado");
+    this.botoes.pause.innerText = "";
+    this.botoes.reset.innerText = "";
+  }
+
+  if (appState.timerState === "running") {
+    this.botoes.iniciar.classList.add("minimizado");
+    this.botoes.iniciar.classList.remove("botaoTimer--paused");
+    this.setAnimation(this.botoes.iniciar);
+    this.botoes.iniciar.innerText = "";
+  }
+
+  if (appState.timerState === "paused") {
+  	this.botoes.iniciar.classList.add("minimizado");
+    this.botoes.iniciar.classList.add("botaoTimer--paused");
+    this.botoes.iniciar.innerText = "";
+    this.botoes.pause.innerText = "resume";
+  }
+},
+setAnimation(el){
+	if (timerConfig.config === "timer"){
+    el.classList.remove("piscando");
+   // el.style.setProperty("--duracao", `${this.duracaoRestante}s`);
+	} else {
+		el.classList.add("piscando");
 	}
 },
 init(){
-this.criarBotaoTimer("pause");
-this.criarBotaoTimer("iniciar");
-this.criarBotaoTimer("reset");
+ if (this.existe) return;
+ this.botoes = {
+ pause: this.criarBotaoTimer("pause"),
+ iniciar: this.criarBotaoTimer("iniciar"),
+ reset: this.criarBotaoTimer("reset"),
+};
+this.existe = true; 
+this.render();
 },
 };
 // objeto relacionado a edicao do timer (tanto mobile, quanto em desktop)
