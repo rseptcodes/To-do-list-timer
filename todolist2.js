@@ -547,6 +547,7 @@ const timerConfig = {
    appState.timerState = "stop";
    this.segundosRestantes = null;
    appState.setNewNumber(this.segundos);
+   botaoTimer.render();
    nowBar.deletar();
 	},
 	pause() {
@@ -735,7 +736,7 @@ const nowBar = {
 const botaoTimer = {
 	existe: false,
 	botoes: {},
-	duracaoRestante: 10,// fallback
+	// duracaoRestante: 10, feature experimental
 	criarBotaoTimer(acao){
 	const botaoTimer = helperFunctions.createElement("button", modoTimer.botaoDiv, "botaoTimer");
 	botaoTimer.classList.add(acao);
@@ -765,6 +766,7 @@ definirFuncoes(el, acao){
 		} 
 		} else if (acao === "reset") {
 			timerConfig.reset();
+			modoTimer.limparTimestamps();
 		}
 },
 render() {
