@@ -379,6 +379,10 @@ body {
 	aspect-ratio: 1.0;
 	border-radius: 100%;
 }
+.botaoTimer.minimizado.iniciar.piscando.botaoTimer--paused {
+  animation: none;
+}
+
 .botaoTimer:active {
   transform: scale(0.92);
   color: var(--sc-color);
