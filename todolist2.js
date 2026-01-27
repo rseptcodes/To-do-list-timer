@@ -736,7 +736,8 @@ const nowBar = {
 const botaoTimer = {
 	existe: false,
 	botoes: {},
-	// duracaoRestante: 10, feature experimental
+	duracaoRestante: 0,
+	animationInProgress: false,
 	criarBotaoTimer(acao){
 	const botaoTimer = helperFunctions.createElement("button", modoTimer.botaoDiv, "botaoTimer");
 	botaoTimer.classList.add(acao);
@@ -745,7 +746,7 @@ const botaoTimer = {
   this.definirFuncoes(botaoTimer, acao);
   tutorialManager.timestampTutorial();
   navigator.vibrate(2);
-  this.duracaoRestante = timerConfig.segundosRestantes;
+  if (timerConfig.config === "timer") this.duracaoRestante = timerConfig.segundosTotais;
   this.render();
 	});
 	return botaoTimer;
@@ -789,8 +790,8 @@ render() {
   if (appState.timerState === "running") {
     this.botoes.iniciar.classList.add("minimizado");
     this.botoes.iniciar.classList.remove("botaoTimer--paused");
-    this.setAnimation(this.botoes.iniciar);
     this.botoes.iniciar.innerText = "";
+    this.setAnimation(this.botoes.iniciar, this.duracaoRestante);
   }
 
   if (appState.timerState === "paused") {
@@ -800,11 +801,17 @@ render() {
     this.botoes.pause.innerText = "resume";
   }
 },
-setAnimation(el){
+//notas: pretendo fazer um subobjeto pra cuidar da animacao de uma forma melhor  atualmemte se pausar, a animacao nao pausa, pretendo melhorar dps 
+async setAnimation(el,duracao){
 	if (timerConfig.config === "timer"){
     el.classList.remove("piscando");
-   // el.style.setProperty("--duracao", `${this.duracaoRestante}s`);
+    el.classList.add("botaoTimer--animation")
+    document.documentElement.style.setProperty('--duration', duracao + "s");
+    const duracaoMS = duracao * 1000;
+    await helperFunctions.delay(duracaoMS);
+    		el.classList.remove("botaoTimer--animation")
 	} else {
+		el.classList.remove("botaoTimer--animation")
 		el.classList.add("piscando");
 	}
 },
@@ -1032,7 +1039,7 @@ const setGestures = {
       createNotas.editarNota(el, id);
     }
   });
-}
+		}
 };
 
 // objeto relacionado aos tutoriais
@@ -1053,7 +1060,6 @@ const tutorialManager = {
     if (salvo) {
         this.tutoriais = JSON.parse(salvo);
     }
-    console.log(this.tutoriais);
 },
 	tutorialUpdate(){
 		localStorage.setItem("tutoriais", JSON.stringify(this.tutoriais));
