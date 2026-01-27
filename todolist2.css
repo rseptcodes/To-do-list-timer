@@ -368,10 +368,53 @@ body {
   font-size: 15px;
   border-bottom:3px solid var(--borderBottonColor);
   transition: 0.5s;
+  z-index: 1;
   -webkit-tap-highlight-color:transparent;
   box-shadow: var(--shadow-medium);
 }
-
+@property --duration {
+  syntax: "<time>";
+  inherits: true;
+  initial-value: 0s;
+}
+.botaoTimer--animation{
+	position: relative;
+	z-index: 1;
+	box-shadow: var(--shadow-medium);
+	transform-style: preserve-3d;
+	border:none;
+}
+.botaoTimer--animation.minimizado::after{
+	content: "";
+	position: absolute;
+	width: 21px;
+  aspect-ratio: 1.0;
+  border-radius: 100%;
+  pointer-events: none;
+  top: 50%;
+  left:50%;
+  transform: translate3d(-50%, -50%, -1px);
+  z-index: 0;
+  background: conic-gradient(
+  red 0deg,
+  red var(--angle),
+  var(--bg-color) var(--angle),
+  var(--bg-color) 360deg
+  );
+  animation: spin var(--duration, 10s) linear forwards;
+}
+@property --angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+@keyframes spin {
+	from{
+	--angle: 0deg;
+	} to {
+  --angle: 360deg;
+	}
+}
 .botaoTimer.minimizado {
 	padding: 0;
 	pointer-events: none;
@@ -379,10 +422,6 @@ body {
 	aspect-ratio: 1.0;
 	border-radius: 100%;
 }
-.botaoTimer.minimizado.iniciar.piscando.botaoTimer--paused {
-  animation: none;
-}
-
 .botaoTimer:active {
   transform: scale(0.92);
   color: var(--sc-color);
