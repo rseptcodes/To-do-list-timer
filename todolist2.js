@@ -514,7 +514,7 @@ const timerConfig = {
 	},500);
   },
   configurar(){
-	 if (!nowBar.element)nowBar.criar();
+	 if (!nowBar.element) nowBar.criar();
    if (this.config === "timer"){
    if (this.segundosRestantes === null) this.segundosRestantes = this.segundosTotais
    this.verificarTimerEnd();
@@ -528,6 +528,7 @@ const timerConfig = {
   if (this.segundosRestantes <= 0){
     timerFinishedScreen.show();
   	visorUI.visorUIFocusON();
+  	if(nowBar.element) nowBar.esconder();
   	navigator.vibrate(100);
   }
   },
@@ -547,8 +548,8 @@ const timerConfig = {
    appState.timerState = "stop";
    this.segundosRestantes = null;
    appState.setNewNumber(this.segundos);
-   botaoTimer.render();
    nowBar.deletar();
+   botaoTimer.render();
 	},
 	pause() {
 		this.segundos_pausados = this.segundos;
@@ -663,12 +664,11 @@ const nowBar = {
   	primeiraVez: true,
   	criar(){
   		if (this.element) return;
-  		this.element = document.createElement("div");
-     	this.element.className = "nowBar";
-	header.header.appendChild(this.element);
+  		this.element = helperFunctions.createElement("div", header.header, "nowBar");
+  		this.setAnimation(this.element, timerConfig.segundosTotais);
 	    appState.subscribe((valor) => {
 	    	const tempoFormatado = helperFunctions.formatar(valor);
-	    	this.element.innerText = tempoFormatado;
+	    	if(this.element) this.element.innerText = tempoFormatado;
 	    });
   	},
   	mostrarNoCentro(){
@@ -708,11 +708,6 @@ const nowBar = {
   		this.estado = "oculto";
   		this.isVisible = false;
   		},
-  	atualizarNowBar(){
-  		if (!this.isVisible || !this.element) return;
-  		const texto = visorUI.visorP.innerText;
-  		this.element.innerText = texto;
-  	},
   	deletar(){
   	if (!this.element) return;
   	this.esconder();
@@ -721,7 +716,6 @@ const nowBar = {
   		clearTimeout(this.timeoutId);
   		this.timeoutId = null;
   	}
-  	setTimeout(() => {
     if (this.element && this.element.parentNode) {
 	this.element.remove();
 	this.element = null;
@@ -729,7 +723,13 @@ const nowBar = {
 	this.estado = "oculto";
 	console.log("NowBar removida");
   	}
-  	}, 300);
+},
+setAnimation(el,duracao){
+	if (timerConfig.config === "timer"){
+	ringAnimationConfig.renderAnimation(el,duracao)
+	} else {
+		el.classList.add("piscando");
+	}
 },
 };
 // objeto dos botoes
@@ -737,7 +737,6 @@ const botaoTimer = {
 	existe: false,
 	botoes: {},
 	duracaoRestante: 0,
-	animationInProgress: false,
 	criarBotaoTimer(acao){
 	const botaoTimer = helperFunctions.createElement("button", modoTimer.botaoDiv, "botaoTimer");
 	botaoTimer.classList.add(acao);
@@ -779,7 +778,8 @@ render() {
   this.botoes.iniciar.innerText = "iniciar";
   this.botoes.pause.innerText = "pause";
   this.botoes.reset.innerText = "reset";
-
+  this.setAnimation(this.botoes.iniciar, this.duracaoRestante);
+  
   if (appState.timerState === "stop") {
     this.botoes.pause.classList.add("minimizado");
     this.botoes.reset.classList.add("minimizado");
@@ -791,27 +791,18 @@ render() {
     this.botoes.iniciar.classList.add("minimizado");
     this.botoes.iniciar.classList.remove("botaoTimer--paused");
     this.botoes.iniciar.innerText = "";
-    this.setAnimation(this.botoes.iniciar, this.duracaoRestante);
   }
 
   if (appState.timerState === "paused") {
   	this.botoes.iniciar.classList.add("minimizado");
-    this.botoes.iniciar.classList.add("botaoTimer--paused");
     this.botoes.iniciar.innerText = "";
     this.botoes.pause.innerText = "resume";
   }
 },
-//notas: pretendo fazer um subobjeto pra cuidar da animacao de uma forma melhor  atualmemte se pausar, a animacao nao pausa, pretendo melhorar dps 
-async setAnimation(el,duracao){
+setAnimation(el,duracao){
 	if (timerConfig.config === "timer"){
-    el.classList.remove("piscando");
-    el.classList.add("botaoTimer--animation")
-    document.documentElement.style.setProperty('--duration', duracao + "s");
-    const duracaoMS = duracao * 1000;
-    await helperFunctions.delay(duracaoMS);
-    		el.classList.remove("botaoTimer--animation")
+	ringAnimationConfig.renderAnimation(el,duracao)
 	} else {
-		el.classList.remove("botaoTimer--animation")
 		el.classList.add("piscando");
 	}
 },
@@ -825,6 +816,42 @@ init(){
 this.existe = true; 
 this.render();
 },
+};
+// cria um anel animado
+const ringAnimationConfig = {
+	async show(el,duracao){
+		if (timerConfig.config !== "timer") return;
+    el.classList.remove("piscando");
+    el.classList.add("ring--animation")
+    document.documentElement.style.setProperty('--duration', duracao + "s");
+	},
+	pause(el){
+		el.classList.add("ring--paused");
+	},
+	resume(el){
+		el.classList.remove("ring--paused");
+	},
+	animationOff(el){
+		el.classList.remove("ring--animation")
+	},
+	renderAnimation(el, duracao) {
+  if (timerConfig.config !== "timer" || !el) return;
+  el.classList.remove("piscando");
+  if (appState.timerState === "running") {
+    el.classList.add("ring--animation");
+    el.classList.remove("ring--paused");
+    document.documentElement.style.setProperty('--duration', duracao + "s");
+  }
+
+  if (appState.timerState === "paused") {
+    el.classList.add("ring--paused");
+  }
+
+  if (appState.timerState === "stop") {
+    el.classList.remove("ring--animation");
+    el.classList.remove("ring--paused");
+  }
+}
 };
 // objeto relacionado a edicao do timer (tanto mobile, quanto em desktop)
 const editTimerValue = {
@@ -1039,7 +1066,7 @@ const setGestures = {
       createNotas.editarNota(el, id);
     }
   });
-		}
+}
 };
 
 // objeto relacionado aos tutoriais
