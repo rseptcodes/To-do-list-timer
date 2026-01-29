@@ -29,6 +29,18 @@
 		--shake-borderColor: 2px solid #161e28;
 		--borderBottonColor: #0e1111;
 }
+@property --angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+@keyframes spin {
+	from{
+	--angle: 0deg;
+	} to {
+  --angle: 360deg;
+	}
+}
 body {
 	box-sizing: border-box;
 	margin: 0;
@@ -377,14 +389,14 @@ body {
   inherits: true;
   initial-value: 0s;
 }
-.botaoTimer--animation{
+.botaoTimer.ring--animation{
 	position: relative;
 	z-index: 1;
 	box-shadow: var(--shadow-medium);
 	transform-style: preserve-3d;
 	border:none;
 }
-.botaoTimer--animation.minimizado::after{
+.botaoTimer.ring--animation.minimizado::after{
 	content: "";
 	position: absolute;
 	width: 21px;
@@ -395,26 +407,8 @@ body {
   left:50%;
   transform: translate3d(-50%, -50%, -1px);
   z-index: 0;
-  background: conic-gradient(
-  red 0deg,
-  red var(--angle),
-  var(--bg-color) var(--angle),
-  var(--bg-color) 360deg
-  );
-  animation: spin var(--duration, 10s) linear forwards;
 }
-@property --angle {
-  syntax: "<angle>";
-  inherits: false;
-  initial-value: 0deg;
-}
-@keyframes spin {
-	from{
-	--angle: 0deg;
-	} to {
-  --angle: 360deg;
-	}
-}
+
 .botaoTimer.minimizado {
 	padding: 0;
 	pointer-events: none;
@@ -556,9 +550,12 @@ body {
   will-change: background-color, box-shadow, transform;
 }
 @media (prefers-reduced-motion: reduce) {
-  .botaoTimer.minimizado.iniciar.piscando {
+  .piscando {
     animation: none;
     background-color: var(--sc-color);
+  }
+  .ring--animation::after{
+  	animation: none;
   }
 }
 @keyframes slideFadeIn {
@@ -714,11 +711,16 @@ body {
   transition: opacity 0.7s ease, transform 0.3s ease;
 }
 
-.nowBar:not(.nowBar--oculto)::after {
+.nowBar.piscando::after {
   content: "";
   position: absolute;
   background-color: var(--red-buttoncolor);
   animation: so-piscar 1.3s ease-in-out infinite;
+  border-radius: 100%;
+}
+.nowBar.ring--animation::after {
+  content: "";
+  position: absolute;
   border-radius: 100%;
 }
 
@@ -979,4 +981,25 @@ body {
     transform: translateY(-150%);
     opacity: 0;
   }
+}
+.ring--animation {
+  position: relative;
+}
+
+.ring--animation::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  border-radius: 100%;
+  background: conic-gradient(
+    var(--red-buttoncolor) 0deg,
+    var(--red-buttoncolor) var(--angle),
+    var(--bg-color) var(--angle),
+    var(--bg-color) 360deg
+  );
+  animation: spin var(--duration, 10s) linear forwards;
+}
+
+.ring--paused::after {
+  animation-play-state: paused;
 }
