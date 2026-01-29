@@ -586,7 +586,7 @@ const visorUI = {
        this.gerenciarSwitchModoTimer();
      this.VisorUI.addEventListener("click", (e) => {
   if (e.target !== this.switchT && !this.switchT?.contains(e.target)) {
-  	if (appState.timerState === "running") return;
+  	if (appState.timerState !== "stop") return;
   	navigator.vibrate(1);
     this.gerenciarEstadoVisorUI();
   }
@@ -803,7 +803,7 @@ setAnimation(el,duracao){
 	if (timerConfig.config === "timer"){
 	ringAnimationConfig.renderAnimation(el,duracao)
 	} else {
-		el.classList.add("piscando");
+		if(appState.timerState === "running") el.classList.add("piscando"); else el.classList.remove("piscando");
 	}
 },
 init(){
