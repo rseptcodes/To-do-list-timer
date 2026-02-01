@@ -7,11 +7,15 @@ const appConfig = {
 		header.criar();
 		modos.init();
 		temas.init();
-		setGestures.verificarDeslizamento(appConfig.moldura, setGestures.onSwipe);
+		setGestures.onSwipe(appConfig.moldura , "right", () => {
+   modoTimer.criarTimestamp();
+});
 		tutorialManager.init();
 		botaoFooter.criar();
     botaoFooter.update();
     overlay.criar();
+    window.addEventListener('pointerdown', (e) => appState.detect(e), { once: true }
+);
 	},
 };
 window.addEventListener("DOMContentLoaded", () => {
@@ -22,6 +26,7 @@ const appState = {
 	listeners: [],
 	timerState: "stop", // pode ser "stop", "paused", edit", 'running" e "finished"
 	timerNumber: 0, // o numero é dado em segundos
+	inputType: null,
 	setNewNumber(newNumber){
 		this.timerNumber = newNumber;
 		this.updateSubscribers();
@@ -35,7 +40,12 @@ const appState = {
    this.listeners.forEach((funcaoDoOuvinte) => {
     funcaoDoOuvinte(this.timerNumber);
   });
-	}
+	},
+	detect(e) {
+  this.inputType = e.pointerType; // "mouse", "touch" ou "pen"
+  console.log('Primeiro input:', this.inputType);
+  window.removeEventListener('pointerdown', this.detect);
+},
 };
 
 // Objeto de modos
@@ -43,7 +53,6 @@ const modos = {
 	modoAtual: null,
 	init(){
 	this.modoAtual = localStorage.getItem("modoAtual");
-  console.log(this.modoAtual);
   if(this.modoAtual === null) this.modoAtual = "Notas";
   this.iniciar(this.modoAtual);
 	},
@@ -160,31 +169,44 @@ const botaoFooter = {
 		this.botaoFooter = helperFunctions.createElement("button", appConfig.moldura, "footerButton");
     this.botaoFooter.innerHTML = '<i class="fa-solid fa-pen"></i>';
     if(this.botaoFooter){
-    	this.botaoFooter.addEventListener("click", () => {
+    	this.botaoFooter.onclick = () => {
     		this.acao();
-    	});
+    	};
     }
 	},
-	acao(){
-		if(this.botaoFooter === null) this.criar();
-		if (modos.modoAtual === "Notas"){
-			inputNotas.ativar();
-			if(this.emFocus && (!overlay.element || !overlay.element.classList.contains("overlay--hidden"))){
-				overlay.hide();
-			} else {
-				overlay.show(true);
-				// ao editar nota, ele nao faz o hide porque nao é derivado da acao do usuario, comportamento plausivel com a funcao, mas errado, irei consertar dps
-			}
-			this.focus();
-		} else if (modos.modoAtual === "Timer" && appState.timerState !== "running"){
-			if(!overlay.element || !overlay.element.classList.contains("overlay--hidden")) overlay.hide(); else overlay.show();
-			editTimerValue.criarEditUI();
-			if (this.emFocus){
-				editTimerValue.transformarValorInput();
-			}
-			this.focus();
-		}
-	},
+	acao() {
+    if (this.botaoFooter === null) this.criar();
+
+    if (modos.modoAtual === "Notas") {
+        inputNotas.ativar();
+        // Se já estava em foco, fecha o overlay, senão abre
+        if (this.emFocus && (!overlay.element || !overlay.element.classList.contains("overlay--hidden"))) {
+            overlay.hide();
+        } else {
+            overlay.show(true);
+        }
+        this.focus();
+    } 
+    else if (modos.modoAtual === "Timer" && appState.timerState !== "running" && appState.timerState !== "paused") {
+
+    if (this.emFocus) {
+    if (appState.inputType === "touch") {
+     mobileEditTimer.setEditValue();
+    	} else {
+     editMenuTimer.transformarValorInput();
+     
+      }
+      editTimerValue.apagarEditor();
+      overlay.hide();
+      } else {
+      editTimerValue.gerenciarModoEdicao();
+      appState.timerState = "edit";
+      overlay.show();
+      }
+      this.focus();
+    }
+},
+
 	focus(){
 	this.botaoFooter.classList.toggle("footerButton--focus");
 	if(this.botaoFooter.classList.contains ("footerButton--focus")) {
@@ -287,7 +309,6 @@ const inputNotas = {
 		if (this.input === null) {
 			this.criar(placeholder);
    		this.focus(this.input);
-   		console.log("criou e focou")
 		}
 },
 focus(input){
@@ -430,7 +451,13 @@ async trocarClassebotaoLixeira(item){
 
 // renderiza as notas salvas no localStorage
 renderizarNotasSalvas(){
-  modoNotas.notasArray = JSON.parse(localStorage.getItem("notasArray") || "[]");
+	try {
+		const dadosSalvos = localStorage.getItem("notasArray")
+		modoNotas.notasArray = dadosSalvos ? JSON.parse(dadosSalvos) : []
+	} catch(erro) {
+		console.error("Erro ao carregar as notas");
+		modoNotas.notasArray = [];
+	}
   modoNotas.notasArray.forEach((item, index) => {
     this.renderizarNotas(item, index);
   });
@@ -497,7 +524,7 @@ const timerConfig = {
   pauseInterval: null,
   segundos_pausados: 0,
   config: "stopwatch", // pode ser stopwatch ou timer
-  segundosTotais: 10, // pra testes
+  segundosTotais: 4, // pra testes
   segundosRestantes: null,
   configSwitch(){
   	this.config = (this.config === "stopwatch") ? "timer" : "stopwatch";
@@ -528,6 +555,7 @@ const timerConfig = {
   if (this.segundosRestantes <= 0){
     timerFinishedScreen.show();
   	visorUI.visorUIFocusON();
+  	appState.timerState = "finished";
   	if(nowBar.element) nowBar.esconder();
   	navigator.vibrate(100);
   }
@@ -644,6 +672,9 @@ const timerFinishedScreen = {
 	 const screenArrow = helperFunctions.createElement("div", this.element, "screenArrow");
 	 const screenTip = helperFunctions.createElement("p", this.element, "screenTip");
 	 screenTip.innerText = "deslize para cima para encerrar";
+	 setGestures.onSwipe(appConfig.moldura , "up", () => {
+	 	if(appState.timerState === "finished")timerConfig.timerEnd();
+});
 	},
 	show(){
 		if(this.element === null) this.criar();
@@ -853,8 +884,118 @@ const ringAnimationConfig = {
   }
 }
 };
-// objeto relacionado a edicao do timer (tanto mobile, quanto em desktop)
+// objeto relacionado a edicao do timer
 const editTimerValue = {
+	gerenciarModoEdicao(){
+		if (appState.timerState !== "stop") return;
+		if(appState.inputType === "touch"){
+			mobileEditTimer.criar();
+		}else {
+			editMenuTimer.criarEditUI()
+		}
+	},
+  apagarEditor() {
+    if (editMenuTimer.editMenu !== null) {
+        editMenuTimer.deletarEditUI();
+    }
+
+    if (mobileEditTimer.mEditDiv !== null) {
+    	console.log("apagou o movikeedit")
+        mobileEditTimer.deletar();
+    }
+    appState.timerState = "stop";
+}
+};
+
+const mobileEditTimer = {
+	mEditDiv: null,
+	minutesDisplay: null,
+	secondsDisplay: null,
+	numbers: {
+		segundos: Math.trunc(appState.timerNumber % 60),
+		minutos: Math.trunc(appState.timerNumber / 60),
+	},
+	criar(){
+		if(this.mEditDiv !== null) return;
+		this.mEditDiv = helperFunctions.createElement("div", appConfig.moldura, "mEditDiv");
+		
+		this.minutesDisplay = helperFunctions.createElement("div", this.mEditDiv, "editDisplay");
+		this.setDisplayGestures(this.minutesDisplay);
+		
+		this.secondsDisplay = helperFunctions.createElement("div", this.mEditDiv, "editDisplay");
+		this.setDisplayGestures(this.secondsDisplay);
+		
+		this.getEditValue();
+	},
+	getEditValue(){
+		if(this.mEditDiv === null) return;
+		const minutosStr = String(this.numbers.minutos).padStart(2, "0");
+		const segundosStr = String(this.numbers.segundos).padStart(2, "0");
+		this.minutesDisplay.innerText = minutosStr;
+		this.secondsDisplay.innerText = segundosStr;
+	},
+	setDisplayGestures(elemento){
+		setGestures.onSwipe(elemento, "up", () => {
+			this.aumentarValor(elemento)
+		});
+		setGestures.onSwipe(elemento, "down", () => {
+			this.diminuirValor(elemento)
+		});
+	},
+	aumentarValor(elemento) {
+  if (elemento === this.minutesDisplay) {
+    this.numbers.minutos++;
+  }
+
+  if (elemento === this.secondsDisplay) {
+    this.numbers.segundos++;
+
+    if (this.numbers.segundos > 59) {
+      this.numbers.segundos = 0;
+      this.numbers.minutos++;
+    }
+  }
+
+  this.getEditValue();
+},
+	diminuirValor(elemento) {
+  if (elemento === this.minutesDisplay) {
+    if (this.numbers.minutos > 0) {
+      this.numbers.minutos--;
+    }
+  }
+
+  if (elemento === this.secondsDisplay) {
+    if (this.numbers.segundos > 0) {
+      this.numbers.segundos--;
+    } else if (this.numbers.minutos > 0) {
+      this.numbers.minutos--;
+      this.numbers.segundos = 59;
+    }
+  }
+
+  this.getEditValue();
+},
+	setEditValue() {
+    const segundosTotais = (this.numbers.minutos * 60) + this.numbers.segundos;
+    
+    appState.setNewNumber(segundosTotais);
+    
+    timerConfig.segundosTotais = segundosTotais;
+    timerConfig.segundos_pausados = 0;
+    timerConfig.segundosRestantes = segundosTotais;
+    appState.timerState = "stop";
+},
+	deletar(){
+		if(mobileEditTimer.mEditDiv === null) return;
+		mobileEditTimer.mEditDiv.remove();
+    mobileEditTimer.mEditDiv = null;
+    mobileEditTimer.minutesDisplay = null;
+    mobileEditTimer.secondsDisplay = null;
+	}
+};
+// caso nao haja touch
+const editMenuTimer = {
 	editMenu: null,
 	editValue: null,
 	minInput: null,
@@ -906,10 +1047,12 @@ return input;
 	async transformarValorInput(){
 		const minutos = this.minInput.value !== "" ? this.minInput.value : "1";
    const segundos = this.secInput.value !== "" ? this.secInput.value : "00";
-   
-		timerConfig.segundosTotais = (minutos * 60) + Number(segundos);
+   timerConfig.segundosTotais = (minutos * 60) + Number(segundos);
 		this.deletarEditUI();
 		appState.setNewNumber(timerConfig.segundosTotais);
+   timerConfig.segundos_pausados = 0;
+   appState.timerState = "stop";
+		this.deletarEditUI();
 	},
 	deletarEditUI(){
 		if (this.editMenu === null) return;
@@ -917,6 +1060,7 @@ return input;
 		this.editMenu = null;
 		this.secInput = null;
 		this.minInput = null;
+		
 	},
 };
 // objeto com funcoes relacionadas a criacao de notas
@@ -991,8 +1135,8 @@ const overlay = {
   if (document.querySelector(".inputNotas")) {
     inputNotas.fechar();
   }
-  if (document.querySelector(".inputEditValue")) {
-    editTimerValue.deletarEditUI();
+  if (appState.timerState === "edit") {
+    editTimerValue.apagarEditor();
     if(botaoFooter.emFocus) botaoFooter.focus();
   }
   this.hide();
@@ -1011,7 +1155,11 @@ const overlay = {
 
 // objeto relacionado aos gestos
 const setGestures = {
-	verificarDeslizamento(elemento, callback){
+	gestureListeners: [],
+	verificarDeslizamento(elemento){
+		if (elemento.dataset.gestureInitialized === "true") return;
+		
+		elemento.dataset.gestureInitialized = "true";
 		const distancia = 100;
 		let inicioX = 0;
 		let inicioY = 0;
@@ -1027,23 +1175,28 @@ const setGestures = {
 		if (Math.abs(diffX) > Math.abs(diffY)){
 			if (Math.abs(diffX) > distancia) {
 			const direcao = diffX > 0 ? "left" : "right";
-			callback(direcao, Math.abs(diffX));
+			this.updateGesturesSubs(elemento, direcao);
 			}
 		} else {
 			if (Math.abs(diffY) > distancia) {
 				const direcao = diffY > 0 ? "up" : "down";
-			callback(direcao, Math.abs(diffY));
+			this.updateGesturesSubs(elemento, direcao);
 			}
 		}
 		});
 	},
-	onSwipe(direcao, diff){
-		//criarTimestamp
-		if(direcao === "right" && appState.timerState === "running" && timerConfig.config === "stopwatch") {
-			modoTimer.criarTimestamp();
-			} else if (direcao === "up" && timerConfig.segundosRestantes < 0)	{
-				timerConfig.timerEnd();
+	onSwipe(elemento,direcao, funcao){
+		this.verificarDeslizamento(elemento)
+		const gestureSub = { target: elemento, direcao: direcao, funcao: funcao };
+		this.gestureListeners.push(gestureSub);
+	},
+	updateGesturesSubs(elemento, direcao){
+		this.gestureListeners.forEach((listener) => {
+			
+			if(listener.target === elemento && listener.direcao === direcao){
+				listener.funcao();
 			}
+  });
 	},
 	verificarToque(el,id) {
   let startTouchTime = 0;
@@ -1082,11 +1235,15 @@ const tutorialManager = {
 	  this.getTutorialStatus();
 	  this.toDoListTutorial();
 	},
-	getTutorialStatus(){
-    const salvo = localStorage.getItem("tutoriais");
-    if (salvo) {
-        this.tutoriais = JSON.parse(salvo);
-    }
+getTutorialStatus(){
+		try {
+			const salvo = localStorage.getItem("tutoriais");
+			if(salvo) {
+				this.tutoriais = JSON.parse(salvo);
+			}
+		} catch(erro){
+			console.error("erro ao carregar os dados dos tutoriais");
+		}
 },
 	tutorialUpdate(){
 		localStorage.setItem("tutoriais", JSON.stringify(this.tutoriais));
