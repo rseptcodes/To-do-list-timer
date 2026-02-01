@@ -5,6 +5,7 @@
 	--bg-color:#f9f9f9;
 	--sc-color:#ebeeef;
 	--pen-buttonfocus:#1ac783;
+	--pen-borderfocus: 3px solid #0b9b7a;
 	--red-buttoncolor:rgba(255, 77, 79, 0.99);
 	--red-bordercolor: 3px solid rgba(237,36,72,0.99);
 	--txt-color:#0c0c0d;
@@ -20,6 +21,7 @@
 	--bg-color:#070708;
 	--sc-color:#1a1b1f;
 	--pen-buttonfocus:#08406e;
+	--pen-borderfocus: 3px solid #04215c;
 	--red-buttoncolor:rgba(136,10,49,0.99);
 		--red-bordercolor: 3px solid rgba(94,7,43,0.99);
 	--txt-color:#e4e4e7;
@@ -104,6 +106,7 @@ body {
 .footerButton--focus{
 	bottom: 10dvh;
 	background-color: var(--pen-buttonfocus);
+	border-bottom: var(--pen-borderfocus);
 }
 .footerButton--hidden{
 	opacity: 0;
@@ -763,19 +766,6 @@ body {
     transform: translateX(-50%) scale(0);
   }
 }
-/* aprimorar dps */
-.overlay {
-	/* background: linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.4) 50%, rgba(0, 0, 0, 0) 100%);
-	z-index: 2;
-	width: 100dvw;
-	height: 100dvh;
-	position: fixed;
-	top: 0;
-	left: 0;
-	animation: fadeIn 1s forwards;
-	*/
-}
-
 
 /* experimental */
 .editMenu{
@@ -832,6 +822,69 @@ body {
 .inputEditValue:focus::placeholder {
 	transform: translateY(-5%);
 	opacity: 0;
+}
+
+.mEditDiv {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  gap: 15px;
+  padding: 25px 35px;
+  color: var(--txt-color);
+  background: var(--sc-color);
+  box-shadow: var(--shadow-medium);
+  border-radius: 12px;
+  z-index: 9;
+  border-bottom: var(--borderBottonColor);
+}
+.mEditDiv::before,
+.mEditDiv::after {
+  content: "";
+  position: fixed;
+  width: 5px;
+  height: 5px;
+  background: var(--txt-color);
+  border-radius: 50%;
+}
+
+.mEditDiv::before {
+  top: calc(50% - 5px);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.mEditDiv::after {
+  top: calc(50% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.editDisplay {
+  width: 90px;
+  height: 80px;
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 2.2rem;
+  font-weight: bold;
+  background: var(--bg-color);
+  color: var(--txt-color);
+  box-shadow: var(--shadow-small);
+  border-radius: 8px;
+  user-select: none;
+  touch-action: none;
+  border-bottom: var(--borderBottonColor);
+  font-family: 'Poppins', Sans-Serif;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.editDisplay:active {
+  transform: scale(1.20);
+  transition: transform 0.2s, background-color 0.1s;
 }
 /* ===== OVERLAY BASE ===== */
 .overlay {
