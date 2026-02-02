@@ -1222,15 +1222,16 @@ const setGestures = {
     }
   });
 } else {
-	let secondClick = false;
+	let clickTimer = null;
 	el.addEventListener("click", () => {
-		secondClick = true;
-		setTimeout (() => {
-			if(secondClick) {
+		if(clickTimer === null){
+			clickTimer = setTimeout(() => {
+				clickTimer = null;
+			}, 300);
+		} else {
+			clearTimeout(clickTimer);
 				createNotas.editarNota(el, id);
-				secondClick = false;
-			}
-		},500);
+		}
 });
 }
 }
