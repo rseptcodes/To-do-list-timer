@@ -611,7 +611,7 @@ const visorUI = {
      this.VisorUI.addEventListener("click", (e) => {
   if (e.target !== this.switchT && !this.switchT?.contains(e.target)) {
   	if (appState.timerState !== "stop") return;
-  	navigator.vibrate(1);
+  	//navigator.vibrate(1);
     this.gerenciarEstadoVisorUI();
   }
 });
