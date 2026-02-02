@@ -496,7 +496,7 @@ criarTimestamp(){
 	timestamp.innerText = qtd + "          " + "|" + "          " + volta;
 	this.timestampDiv.appendChild(timestamp);
 	timestamp.className = "timestamp";
-	navigator.vibrate(20);
+	//navigator.vibrate(20);
 	console.log([...modoTimer.timestampDiv.children].map(el => el.className));
 },
 async limparTimestamps() {
@@ -553,7 +553,7 @@ const timerConfig = {
   	visorUI.visorUIFocusON();
   	appState.timerState = "finished";
   	if(nowBar.element) nowBar.esconder();
-  	navigator.vibrate(100);
+  	//navigator.vibrate(100);
   }
   },
   timerEnd(){
@@ -633,7 +633,7 @@ gerenciarSwitchModoTimer(){
      	this.switchT.addEventListener("click",(e) => {
      		e.stopPropagation();
 		this.switchT.classList.toggle("switch--ativo");
-		navigator.vibrate(2);
+		//navigator.vibrate(2);
 		timerConfig.configSwitch();
 		if (botaoFooter.botaoFooter)botaoFooter.update();
 	  console.log(timerConfig.config)
@@ -1227,7 +1227,7 @@ const setGestures = {
     
     holdTimer = setTimeout(() => {
       el.classList.add("balançando");
-      navigator.vibrate(30);
+      //navigator.vibrate(30);
     }, 800);
   });
 
