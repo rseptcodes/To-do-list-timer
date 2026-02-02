@@ -798,7 +798,6 @@ definirFuncoes(el, acao){
 		}
 },
 render() {
-	alert("esta rodando")
   if (!this.existe || !this.botoes.iniciar) return;
   this.botoes.iniciar.classList.remove("minimizado");
   this.botoes.pause.classList.remove("minimizado");
