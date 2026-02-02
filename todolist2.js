@@ -7,15 +7,10 @@ const appConfig = {
 		header.criar();
 		modos.init();
 		temas.init();
-		setGestures.onSwipe(appConfig.moldura , "right", () => {
-   modoTimer.criarTimestamp();
-});
 		tutorialManager.init();
 		botaoFooter.criar();
     botaoFooter.update();
     overlay.criar();
-    window.addEventListener('pointerdown', (e) => appState.detect(e), { once: true }
-);
 	},
 };
 window.addEventListener("DOMContentLoaded", () => {
@@ -26,7 +21,7 @@ const appState = {
 	listeners: [],
 	timerState: "stop", // pode ser "stop", "paused", edit", 'running" e "finished"
 	timerNumber: 0, // o numero é dado em segundos
-	inputType: "mouse",
+	inputType: (window.matchMedia("(pointer: coarse)").matches) ? "touch" : "mouse",
 	setNewNumber(newNumber){
 		this.timerNumber = newNumber;
 		this.updateSubscribers();
@@ -375,7 +370,8 @@ async renderizarNotas(item, index){
   notaFundo.dataset.id = id;
 
   const botaoLixeira = this.criarbotaoLixeira(notaDiv, id);
-  setGestures.verificarToque(notaFundo, id);
+  setInteractions.chooseEditMethod(notaFundo, id);
+  
   notaFundo.addEventListener("click", () => {
     this.trocarClassebotaoLixeira(botaoLixeira);
     notaFundo.classList.toggle("mini");
@@ -775,6 +771,7 @@ const botaoTimer = {
 	botaoTimer.addEventListener("click",() => {
   this.definirFuncoes(botaoTimer, acao);
   tutorialManager.timestampTutorial();
+  setInteractions.chooseTimestampMethod();
   navigator.vibrate(2);
   if (timerConfig.config === "timer") this.duracaoRestante = timerConfig.segundosTotais;
   this.render();
@@ -1153,7 +1150,31 @@ const overlay = {
 		this.element.classList.add("overlay--hidden");
 	},
 };
-
+const setInteractions = {
+	states:{
+		hasTimestampMethod: false,
+	},
+	chooseTimestampMethod(){
+		if(this.states.hasTimestampMethod) return;
+		if(appState.inputType === "mouse"){
+			setInputs.listenSpaceKey(() => modoTimer.criarTimestamp());
+		} else {
+			setGestures.onSwipe(appConfig.moldura , "right", () => {
+   modoTimer.criarTimestamp();
+});
+		}
+		this.states.hasTimestampMethod = true;
+	},
+	chooseEditMethod(el, id){
+	//if(el.dataset.hasEditMethod) return;
+		if(appState.inputType === "mouse"){
+			setInputs.doubleClick(el, id)
+	} else {
+		setGestures.verificarToque(el, id);
+	}
+  el.dataset.hasEditMethod = "true";
+}
+};
 // objeto relacionado aos gestos
 const setGestures = {
 	gestureListeners: [],
@@ -1200,7 +1221,6 @@ const setGestures = {
   });
 	},
 	verificarToque(el,id) {
-		if (appState.inputType === "touch"){
   let startTouchTime = 0;
   let holdTimer;
   el.addEventListener("touchstart", () => {
@@ -1221,7 +1241,21 @@ const setGestures = {
       createNotas.editarNota(el, id);
     }
   });
-} else {
+}
+};
+const setInputs = {
+	_spaceBound: false,
+	listenSpaceKey(funcao){
+		if(this._spaceBound) return;
+		this._spaceBound = true;
+		document.addEventListener("keydown", (e) => {
+  if (e.code === "Space") {
+    e.preventDefault();
+    funcao();
+  }
+});
+	},
+	doubleClick(el, id){
 	let clickTimer = null;
 	el.addEventListener("click", () => {
 		if(clickTimer === null){
@@ -1234,9 +1268,7 @@ const setGestures = {
 		}
 });
 }
-}
-};
-
+	}
 // objeto relacionado aos tutoriais
 const tutorialManager = {
 	tutoriais: {
