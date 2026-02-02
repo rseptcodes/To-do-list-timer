@@ -1225,7 +1225,10 @@ const setGestures = {
 	el.addEventListener("click", () => {
 		secondClick = true;
 		setTimeout (() => {
-			if(secondClick) createNotas.editarNota(el, id);
+			if(secondClick) {
+				createNotas.editarNota(el, id);
+				secondClick = false;
+			}
 		},500);
 });
 }
