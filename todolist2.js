@@ -26,7 +26,7 @@ const appState = {
 	listeners: [],
 	timerState: "stop", // pode ser "stop", "paused", edit", 'running" e "finished"
 	timerNumber: 0, // o numero é dado em segundos
-	inputType: null,
+	inputType: "mouse",
 	setNewNumber(newNumber){
 		this.timerNumber = newNumber;
 		this.updateSubscribers();
@@ -41,11 +41,11 @@ const appState = {
     funcaoDoOuvinte(this.timerNumber);
   });
 	},
-	detect(e) {
-  this.inputType = e.pointerType; // "mouse", "touch" ou "pen"
-  console.log('Primeiro input:', this.inputType);
-  window.removeEventListener('pointerdown', this.detect);
+detect(e) {
+    this.inputType = e.pointerType; // "mouse", "touch" ou "pen"
+    console.log('Primeiro input detectado:', this.inputType);
 },
+
 };
 
 // Objeto de modos
@@ -1049,6 +1049,7 @@ return input;
    const segundos = this.secInput.value !== "" ? this.secInput.value : "00";
    timerConfig.segundosTotais = (minutos * 60) + Number(segundos);
 		this.deletarEditUI();
+		botaoTimer.render();
 		appState.setNewNumber(timerConfig.segundosTotais);
    timerConfig.segundos_pausados = 0;
    appState.timerState = "stop";
