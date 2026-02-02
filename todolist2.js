@@ -1199,6 +1199,7 @@ const setGestures = {
   });
 	},
 	verificarToque(el,id) {
+		if (appState.inputType === "touch"){
   let startTouchTime = 0;
   let holdTimer;
   el.addEventListener("touchstart", () => {
@@ -1219,6 +1220,15 @@ const setGestures = {
       createNotas.editarNota(el, id);
     }
   });
+} else {
+	let secondClick = false;
+	el.addEventListener("click", () => {
+		secondClick = true;
+		setTimeout (() => {
+			if(secondClick) createNotas.editarNota(el, id);
+		},500);
+});
+}
 }
 };
 
