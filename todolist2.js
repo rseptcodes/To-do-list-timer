@@ -772,7 +772,6 @@ const botaoTimer = {
   this.definirFuncoes(botaoTimer, acao);
   tutorialManager.timestampTutorial();
   setInteractions.chooseTimestampMethod();
-  navigator.vibrate(2);
   if (timerConfig.config === "timer") this.duracaoRestante = timerConfig.segundosTotais;
   this.render();
 	});
