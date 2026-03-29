@@ -174,12 +174,6 @@ const botaoFooter = {
 
     if (modos.modoAtual === "Notas") {
         inputNotas.ativar();
-        // Se já estava em foco, fecha o overlay, senão abre
-        if (this.emFocus && (!overlay.element || !overlay.element.classList.contains("overlay--hidden"))) {
-            overlay.hide();
-        } else {
-            overlay.show(true);
-        }
         this.focus();
     } 
     else if (modos.modoAtual === "Timer" && appState.timerState !== "running" && appState.timerState !== "paused") {
@@ -219,10 +213,10 @@ const botaoFooter = {
 		}
 		if (timerConfig.config === "stopwatch"){
 			this.hide();
-			console.log("esconde");
+	
 		} else if (timerConfig.config === "timer"){
 			this.reveal();
-			console.log("revelou")
+			
 		}
 	},
 	hide(){
@@ -292,6 +286,7 @@ const inputNotas = {
   }
 },
 	ativar(index, placeholder){
+		overlay.controller(modos.modoAtual === "Notas");
 		if (this.input !== null){
     let textoInput = this.input.value.trim();
     if (textoInput === ""){
@@ -327,7 +322,6 @@ fechar(texto){
     this.input.remove();
     this.input = null;
   }
-  console.log(texto)
   if (!texto){
   	botaoFooter.focus();
   	return;
@@ -391,7 +385,6 @@ async editarNota(el, id){
   if (document.querySelector(".inputNotas")) return;
   const index = modoNotas.notasArray.findIndex(n => n.id === id);
   const textoPlaceholder = modoNotas.notasArray[index].text
-  console.log("editar -> index encontrado:", index);
   modoNotas.ultimoIndexSalvo = index;
   const notaPApagar = document.querySelector(`[data-id="${id}"]`);
   if (notaPApagar) {
@@ -497,7 +490,6 @@ criarTimestamp(){
 	this.timestampDiv.appendChild(timestamp);
 	timestamp.className = "timestamp";
 	//navigator.vibrate(20);
-	console.log([...modoTimer.timestampDiv.children].map(el => el.className));
 },
 async limparTimestamps() {
   const timestamps = [...this.timestampDiv.children];
@@ -636,7 +628,6 @@ gerenciarSwitchModoTimer(){
 		//navigator.vibrate(2);
 		timerConfig.configSwitch();
 		if (botaoFooter.botaoFooter)botaoFooter.update();
-	  console.log(timerConfig.config)
 	});
 },
 gerenciarEstadoVisorUI(){
@@ -748,7 +739,6 @@ const nowBar = {
 	this.element = null;
 	this.isVisible = false;
 	this.estado = "oculto";
-	console.log("NowBar removida");
   	}
 },
 setAnimation(el,duracao){
@@ -896,7 +886,6 @@ const editTimerValue = {
     }
 
     if (mobileEditTimer.mEditDiv !== null) {
-    	console.log("apagou o movikeedit")
         mobileEditTimer.deletar();
     }
     appState.timerState = "stop";
@@ -1148,6 +1137,22 @@ const overlay = {
 		if(this.element === null) return;
 		this.element.classList.add("overlay--hidden");
 	},
+	controller(){
+	if (typeof condition === "undefined") {
+		if (this.element.classList.contains("overlay--hidden")) {
+			this.show();
+		} else {
+			this.hide();
+		}
+		return;
+	}
+
+	if (condition) {
+		this.show();
+	} else {
+		this.hide();
+	}
+}
 };
 const setInteractions = {
 	states:{
