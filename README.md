@@ -3,7 +3,6 @@
 ![HTML5](https://img.shields.io/badge/html5-%23E34F26.svg?style=for-the-badge&logo=html5&logoColor=white)
 ![CSS3](https://img.shields.io/badge/css3-%231572B6.svg?style=for-the-badge&logo=css3&logoColor=white)
 ![JavaScript](https://img.shields.io/badge/javascript-%23323330.svg?style=for-the-badge&logo=javascript&logoColor=%23F7DF1E)
-![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)
 
 ## 💡 The Story Behind the Project
 I built this project out of a personal need. I needed a way to jot down notes while simultaneously keeping track of time. I wanted to avoid the hassle of constantly switching back and forth between two different apps on my phone. To solve this, I created this web app—an all-in-one, mobile-friendly solution that keeps your productivity flowing.
